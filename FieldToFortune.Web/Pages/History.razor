@@ -1,0 +1,128 @@
+@page "/history"
+@using FieldToFortune.Model
+@inject GameState GameState
+
+<!-- ═══════════════════════════════════════════════════════
+     HISTORY.RAZOR — Transaction log + performance stats
+═══════════════════════════════════════════════════════ -->
+
+<div class="history-page">
+
+    <!-- ── HEADER ──────────────────────────────────────────── -->
+    <div class="page-header">
+        <h1 class="page-title">History & Stats</h1>
+    </div>
+
+    <!-- ── STATS ROW ──────────────────────────────────────── -->
+    <section class="stats-row">
+
+        <div class="stat-card">
+            <span class="stat-card__icon">⟳</span>
+            <span class="stat-card__label">Trades Made</span>
+            <span class="stat-card__value">@TradeCount</span>
+        </div>
+
+        <div class="stat-card @(AvgReturnPerTurn >= 0 ? "stat-card--positive" : "stat-card--negative")">
+            <span class="stat-card__icon">◈</span>
+            <span class="stat-card__label">Avg Return / Turn</span>
+            <span class="stat-card__value">
+                @(AvgReturnPerTurn >= 0 ? "+" : "")@AvgReturnPerTurn.ToString("F2")%
+            </span>
+        </div>
+
+        <div class="stat-card">
+            <span class="stat-card__icon">★</span>
+            <span class="stat-card__label">Best Asset</span>
+            <span class="stat-card__value">@BestAsset</span>
+        </div>
+
+        <div class="stat-card @(GameState.Player.NetWorthChange >= 0 ? "stat-card--positive" : "stat-card--negative")">
+            <span class="stat-card__icon">◉</span>
+            <span class="stat-card__label">Total Performance</span>
+            <span class="stat-card__value">
+                @(GameState.Player.NetWorthChange >= 0 ? "+" : "")@((GameState.Player.NetWorthChange*100).ToString("F1"))%
+            </span>
+        </div>
+
+    </section>
+
+    <!-- ── TRANSACTION LOG ────────────────────────────────── -->
+    <section class="portfolio-section">
+        <h2 class="section-title">Transaction Log</h2>
+
+        @if (!GameState.Player.TransactionHistory.Any())
+        {
+            <p class="empty-state">No transactions yet. Start trading!</p>
+        }
+        else
+        {
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Turn</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                        <th class="text-right">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var entry in GameState.Player.TransactionHistory.AsEnumerable().Reverse())
+                    {
+                        <tr>
+                            <td class="mono text--muted">@entry.Turn</td>
+                            <td>
+                                <span class="badge @GetTypeBadgeClass(entry.Type)">
+                                    @entry.Type
+                                </span>
+                            </td>
+                            <td>@entry.Description</td>
+                            <td class="text-right mono @(entry.Amount > 0 ? "text--positive" : "text--negative")">
+                                @(entry.Amount > 0 ? "+" : "-")@Math.Abs(entry.Amount).ToString("F2") $
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </section>
+
+</div>
+
+@code {
+    private int TradeCount =>
+        GameState.Player.TransactionHistory.Count(t =>
+            t.Type == TransactionType.Purchase || t.Type == TransactionType.Sale);
+
+    private double AvgReturnPerTurn
+    {
+        get
+        {
+            if (GameState.CurrentTurn <= 1) return 0;
+            double totalReturn = (GameState.Player.NetWorth - 1000.0) / 1000.0 * 100;
+            return totalReturn / (GameState.CurrentTurn - 1);
+        }
+    }
+
+    private string BestAsset
+    {
+        get
+        {
+            var best = GameState.Market.Commodities
+                .OrderByDescending(c => c.Variation)
+                .FirstOrDefault();
+            return best != null
+                ? $"{best.Name} ({(best.Variation >= 0 ? "+" : "")}{(best.Variation * 100):F1}%)"
+                : "—";
+        }
+    }
+    
+
+    private string GetTypeBadgeClass(TransactionType type) => type switch
+    {
+        TransactionType.Purchase      => "badge--buy",
+        TransactionType.Sale     => "badge--sell",
+        TransactionType.CallContract => "badge--call",
+        TransactionType.CallExercise => "badge--exercise",
+        _                        => ""
+    };
+}

@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FieldToFortune.Console", "FieldToFortune.Console\FieldToFortune.Console.csproj", "{4CBE7298-6DB1-44BD-BAEC-564C346D6999}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FieldToFortune.Web", "FieldToFortune.Web\FieldToFortune.Web.csproj", "{A53180C9-308B-4866-B646-C53961B51181}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FieldToFortune.Library", "FieldToFortune.Library\FieldToFortune.Library.csproj", "{5F81650E-8966-4E09-A5DD-4389DEA5D44E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4CBE7298-6DB1-44BD-BAEC-564C346D6999}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4CBE7298-6DB1-44BD-BAEC-564C346D6999}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4CBE7298-6DB1-44BD-BAEC-564C346D6999}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4CBE7298-6DB1-44BD-BAEC-564C346D6999}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A53180C9-308B-4866-B646-C53961B51181}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A53180C9-308B-4866-B646-C53961B51181}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A53180C9-308B-4866-B646-C53961B51181}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A53180C9-308B-4866-B646-C53961B51181}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5F81650E-8966-4E09-A5DD-4389DEA5D44E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5F81650E-8966-4E09-A5DD-4389DEA5D44E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5F81650E-8966-4E09-A5DD-4389DEA5D44E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5F81650E-8966-4E09-A5DD-4389DEA5D44E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

@@ -1,0 +1,167 @@
+@page "/portfolio"
+@using FieldToFortune.Model
+@using FieldToFortune.Service
+@inject GameState GameState
+@inject TradingService TradingService
+
+<!-- ═══════════════════════════════════════════════════════
+     PORTFOLIO.RAZOR — Holdings + active call options
+═══════════════════════════════════════════════════════ -->
+
+<div class="portfolio-page">
+
+    <!-- ── HEADER ──────────────────────────────────────────── -->
+    <div class="page-header">
+        <h1 class="page-title">Portfolio</h1>
+        <div class="portfolio-summary">
+            <div class="summary-card">
+                <span class="summary-card__label">Cash</span>
+                <span class="summary-card__value">@GameState.Player.Cash.ToString("F2") $</span>
+            </div>
+            <div class="summary-card">
+                <span class="summary-card__label">Holdings Value</span>
+                <span class="summary-card__value">@HoldingsValue.ToString("F2") $</span>
+            </div>
+            <div class="summary-card summary-card--accent">
+                <span class="summary-card__label">Net Worth</span>
+                <span class="summary-card__value">@GameState.Player.NetWorth.ToString("F2") $</span>
+            </div>
+            <div class="summary-card @(GameState.Player.NetWorthChange >= 0 ? "summary-card--positive" : "summary-card--negative")">
+                <span class="summary-card__label">Performance</span>
+                <span class="summary-card__value">
+                    @(GameState.Player.NetWorthChange >= 0 ? "+" : "")@((GameState.Player.NetWorthChange*100).ToString("F1"))%
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── HOLDINGS TABLE ─────────────────────────────────── -->
+    <section class="portfolio-section">
+        <h2 class="section-title">Holdings</h2>
+
+        @if (!Holdings.Any())
+        {
+            <p class="empty-state">You don't own any commodities yet. Head to the market!</p>
+        }
+        else
+        {
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Commodity</th>
+                        <th class="text-right">Quantity</th>
+                        <th class="text-right">Current Price</th>
+                        <th class="text-right">Value</th>
+                        <th class="text-right">Variation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var (commodity, quantity) in Holdings)
+                    {
+                        <tr>
+                            <td class="td--name">@commodity.Name</td>
+                            <td class="text-right">@quantity</td>
+                            <td class="text-right mono">@commodity.Price.ToString("F2") $</td>
+                            <td class="text-right mono">@((commodity.Price * quantity).ToString("F2")) $</td>
+                            <td class="text-right mono @(commodity.Variation >= 0 ? "text--positive" : "text--negative")">
+                                @(commodity.Variation >= 0 ? "+" : "")@((commodity.Variation * 100).ToString("F1"))%
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </section>
+
+    <!-- ── CALL OPTIONS TABLE ─────────────────────────────── -->
+    <section class="portfolio-section">
+        <h2 class="section-title">Active Call Options</h2>
+
+        @if (!GameState.Player.Calls.Any())
+        {
+            <p class="empty-state">No active options. Buy a call option on the market page.</p>
+        }
+        else
+        {
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Underlying</th>
+                        <th class="text-right">Strike Price</th>
+                        <th class="text-right">Current Price</th>
+                        <th class="text-right">Expires</th>
+                        <th class="text-right">Payoff</th>
+                        <th class="text-right">Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var option in GameState.Player.Calls.Keys)
+                    {
+                        <tr>
+                            <td class="td--name">@option.Underlying.Name</td>
+                            <td class="text-right mono">@option.StrikePrice.ToString("F2") $</td>
+                            <td class="text-right mono">@option.Underlying.Price.ToString("F2") $</td>
+                            <td class="text-right">T+@option.Expiry</td>
+                            <td class="text-right mono @(option.Payoff > 0 ? "text--positive" : "text--negative")">
+                                @option.Payoff.ToString("F2") $
+                            </td>
+                            <td class="text-right">
+                                <span class="badge @(option.Payoff > 0 ? "badge--itm" : "badge--otm")">
+                                    @(option.Payoff > 0 ? "In the money" : "Out of the money")
+                                </span>
+                            </td>
+                            <td>
+                                @if (option.IsAtExerciceDate && option.Payoff > 0)
+                                {
+                                    <button class="btn btn--call btn--small"
+                                            @onclick="() => OnExercise(option)">
+                                        Exercise
+                                    </button>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </section>
+
+    <!-- ── Progress toward target ─────────────────────────── -->
+    <section class="portfolio-section">
+        <h2 class="section-title">Progress to Target</h2>
+        <div class="progress-bar-container">
+            <div class="progress-bar-track">
+                <div class="progress-bar-fill" style="width: @ProgressPercent%"></div>
+            </div>
+            <div class="progress-bar-labels">
+                <span>1 000 $</span>
+                <span class="@(GameState.Player.NetWorthChange >= 0 ? "text--positive" : "text--negative")">
+                    @GameState.Player.NetWorth.ToString("F0") $
+                </span>
+                <span>@GameState.WinningNetWorth $</span>
+            </div>
+        </div>
+    </section>
+
+</div>
+
+@code {
+    private IEnumerable<KeyValuePair<Commodity, int>> Holdings =>
+        GameState.Player.Portfolio.Commodities.AsEnumerable()
+            .Where(p => p.Value > 0);
+
+    private double HoldingsValue =>
+        Holdings.Sum(h => h.Key.Price * h.Value);
+    
+
+    private double ProgressPercent =>
+        Math.Min(100, Math.Max(0,
+            (GameState.Player.NetWorth - 1000.0)
+            / (GameState.WinningNetWorth - 1000.0) * 100));
+
+    private void OnExercise(Call option)
+    {
+        TradingService.ExerciseCall(GameState.Player, option, GameState.CurrentTurn);
+    }
+}

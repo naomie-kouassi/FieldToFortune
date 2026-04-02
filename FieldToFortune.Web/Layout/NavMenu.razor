@@ -1,0 +1,63 @@
+@implements IDisposable
+@using FieldToFortune.Model
+@inject GameState GameState
+
+<!-- ═══════════════════════════════════════════════════════
+     NAVMENU.RAZOR — Left sidebar navigation
+═══════════════════════════════════════════════════════ -->
+
+<nav class="nav">
+    <div class="nav__brand">
+        <span class="nav__logo">F2F</span>
+        <div class="nav__brand-text">
+            <span class="nav__title">Field to Fortune</span>
+            <span class="nav__player">@GameState.Player.Name</span>
+        </div>
+    </div>
+
+    <div class="nav__links">
+        <NavLink class="nav__link" href="/home" Match="NavLinkMatch.All">
+            <span class="nav__icon">◈</span>
+            <span>Market</span>
+        </NavLink>
+        <NavLink class="nav__link" href="/portfolio">
+            <span class="nav__icon">◉</span>
+            <span>Portfolio</span>
+        </NavLink>
+        <NavLink class="nav__link" href="/history">
+            <span class="nav__icon">◎</span>
+            <span>History</span>
+        </NavLink>
+    </div>
+
+    <div class="nav__footer">
+        <div class="nav__turn-info">
+            <span class="nav__turn-label">Turn</span>
+            <span class="nav__turn-value">@GameState.CurrentTurn / @GameState.NbTurns</span>
+        </div>
+        <div class="nav__worth-info">
+            <span class="nav__turn-label">Net Worth</span>
+            <span class="nav__turn-value @(GameState.Player.NetWorthChange >= 0 ? "text--positive" : "text--negative")">
+                @GameState.Player.NetWorth.ToString("F2")$
+            </span>
+        </div>
+        <NavLink class="nav__link nav__link--menu" href="/menu">
+            <span class="nav__icon">⊙</span>
+            <span>Menu</span>
+        </NavLink>
+    </div>
+</nav>
+
+@code {
+    protected override void OnInitialized()
+    {
+        // Subscribe to the event when the component starts
+        GameState.OnChange += StateHasChanged;
+    }
+
+    public void Dispose()
+    {
+        // Unsubscribe when the component is destroyed to prevent memory leaks
+        GameState.OnChange -= StateHasChanged;
+    }
+}
