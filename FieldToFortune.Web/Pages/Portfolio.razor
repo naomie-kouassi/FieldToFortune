@@ -16,7 +16,7 @@
         <div class="portfolio-summary">
             <div class="summary-card">
                 <span class="summary-card__label">Cash</span>
-                <span class="summary-card__value">@GameState.Player.Cash.ToString("F2") $</span>
+                <span class="summary-card__value">$ @GameState.Player.Cash.ToString("F2")</span>
             </div>
             <div class="summary-card">
                 <span class="summary-card__label">Holdings Value</span>
@@ -24,7 +24,7 @@
             </div>
             <div class="summary-card summary-card--accent">
                 <span class="summary-card__label">Net Worth</span>
-                <span class="summary-card__value">@GameState.Player.NetWorth.ToString("F2") $</span>
+                <span class="summary-card__value">$ @GameState.Player.NetWorth.ToString("F2")</span>
             </div>
             <div class="summary-card @(GameState.Player.NetWorthChange >= 0 ? "summary-card--positive" : "summary-card--negative")">
                 <span class="summary-card__label">Performance</span>
@@ -79,7 +79,7 @@
 
         @if (!GameState.Player.Calls.Any())
         {
-            <p class="empty-state">No active options. Buy a call option on the market page.</p>
+            <p class="empty-state">No active options. You could buy a call option on the market page!</p>
         }
         else
         {
@@ -100,11 +100,11 @@
                     {
                         <tr>
                             <td class="td--name">@option.Underlying.Name</td>
-                            <td class="text-right mono">@option.StrikePrice.ToString("F2") $</td>
-                            <td class="text-right mono">@option.Underlying.Price.ToString("F2") $</td>
+                            <td class="text-right mono">$ @option.StrikePrice.ToString("F2")</td>
+                            <td class="text-right mono">$ @option.Underlying.Price.ToString("F2")</td>
                             <td class="text-right">T+@option.Expiry</td>
                             <td class="text-right mono @(option.Payoff > 0 ? "text--positive" : "text--negative")">
-                                @option.Payoff.ToString("F2") $
+                                $ @option.Payoff.ToString("F2") 
                             </td>
                             <td class="text-right">
                                 <span class="badge @(option.Payoff > 0 ? "badge--itm" : "badge--otm")">
@@ -135,9 +135,9 @@
                 <div class="progress-bar-fill" style="width: @ProgressPercent%"></div>
             </div>
             <div class="progress-bar-labels">
-                <span>1 000 $</span>
+                <span>$ 1 000 </span>
                 <span class="@(GameState.Player.NetWorthChange >= 0 ? "text--positive" : "text--negative")">
-                    @GameState.Player.NetWorth.ToString("F0") $
+                    $ @GameState.Player.NetWorth.ToString("F0") 
                 </span>
                 <span>@GameState.WinningNetWorth $</span>
             </div>
@@ -155,13 +155,21 @@
         Holdings.Sum(h => h.Key.Price * h.Value);
     
 
-    private double ProgressPercent =>
-        Math.Min(100, Math.Max(0,
-            (GameState.Player.NetWorth - 1000.0)
-            / (GameState.WinningNetWorth - 1000.0) * 100));
-
+    private double ProgressPercent
+    {
+        get
+        {
+            double target = GameState.WinningNetWorth - GameState.Player.StartCash;
+            if (target <= 0) return 0; // Prevent division by zero or negative targets
+        
+            double ratio = GameState.Player.Profits / target;
+            return Math.Clamp(ratio * 100, 0, 100);
+        }
+    }
+    
     private void OnExercise(Call option)
     {
         TradingService.ExerciseCall(GameState.Player, option, GameState.CurrentTurn);
+        GameState.NotifyStateChanged();
     }
 }

@@ -129,15 +129,9 @@ public class ConsoleUI
     {
         Console.WriteLine("\n====== BUY MENU =====");
         DisplayCommodities();
-        
-        Console.WriteLine("Choose a commodity: ");
-        int index = Convert.ToInt32(Console.ReadLine());
-        Commodity? commodity = market.GetCommodity(index-1);
-        if (commodity == null)
-        {
-            Console.WriteLine("Invalid action!");
-            return;
-        }
+
+        var commodity = SelectCommodity();
+        if (commodity == null) return;
         
         Console.WriteLine("Quantity: ");
         var quantity = Convert.ToInt32(Console.ReadLine());
@@ -153,6 +147,7 @@ public class ConsoleUI
         Console.WriteLine($"Current balance: {player.Cash}$");
 
     }
+    
 
     private void Sell()
     {
@@ -164,14 +159,10 @@ public class ConsoleUI
             Console.WriteLine("No commodities to sell!");
             return;
         }
-        Console.WriteLine("Choose a commodity: ");
-        int index = Convert.ToInt32(Console.ReadLine());
-        Commodity? commodity = market.GetCommodity(index-1);
-        if (commodity == null)
-        {
-            Console.WriteLine("Invalid action!");
-            return;
-        }
+        
+        var commodity = SelectCommodity();
+        if (commodity == null) return;
+        
         Console.WriteLine("Quantity: ");
         var quantity = Convert.ToInt32(Console.ReadLine());
         Transaction? t = tradingService.SellCommodity(player, commodity, quantity, _gameState.CurrentTurn);
@@ -193,14 +184,8 @@ public class ConsoleUI
         Console.WriteLine("\n====== BUY CALL MENU =====");
         DisplayCommodities();
         
-        Console.WriteLine("Choose an underlying commodity: ");
-        int index = Convert.ToInt32(Console.ReadLine());
-        Commodity? commodity = market.GetCommodity(index-1);
-        if (commodity == null)
-        {
-            Console.WriteLine("Invalid action!");
-            return;
-        }
+        var commodity = SelectCommodity();
+        if (commodity == null) return;
         
         Console.WriteLine("Quantity: ");
         var quantity = Convert.ToInt32(Console.ReadLine());
@@ -221,6 +206,18 @@ public class ConsoleUI
         
         Console.WriteLine("Successful purchase.");
         Console.WriteLine($"Current balance: {player.Cash}$");
+    }
+    
+    private Commodity? SelectCommodity()
+    {
+        Console.WriteLine("Choose a commodity: ");
+        int index = Convert.ToInt32(Console.ReadLine());
+        if (index <= 0 || index > market.Commodities.Count+1)
+        {
+            Console.WriteLine("Invalid action!");
+            return null;
+        }
+        return market.GetCommodity(index-1);
     }
 
     private void DisplayHistory()

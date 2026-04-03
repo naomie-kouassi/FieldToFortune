@@ -16,6 +16,6 @@ foreach (Commodity commodity in market.Commodities)
 }
 
 
-var priceProvider = new SimulatedPriceProvider(market.Commodities);
+var priceProvider = new SimulatedPriceProvider(market);
 var ui = new ConsoleUI(player, market, priceProvider);
 ui.Run();

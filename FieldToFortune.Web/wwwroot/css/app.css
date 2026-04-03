@@ -70,7 +70,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 24px;
+    padding: 0 12px;
     height: 56px;
     background: var(--bg-secondary);
     border-bottom: 1px solid var(--border);
@@ -152,7 +152,7 @@ body {
 
 .trading-layout {
     display: grid;
-    grid-template-columns: 280px 1fr;
+    grid-template-columns: 25% 1fr;
     flex: 1;
     overflow: hidden;
 }
@@ -167,6 +167,8 @@ body {
     display: flex;
     flex-direction: column;
     gap: 16px;
+    min-height: 80vh;
+    width: 100%;
 }
 
 .panel-title {
@@ -321,30 +323,36 @@ body {
     flex-direction: column;
     overflow: hidden;
     padding: 20px;
+    min-width: 0;
     gap: 16px;
+    height:100%
 }
 
 .chart-container {
     flex: 1;
-    min-height: 0;
     background: var(--bg-secondary);
     border: 1px solid var(--border);
     border-radius: 10px;
     padding: 16px;
+    min-height: 50vh;
+    max-height: 50vh;
+    
 }
 
 /* ── ASSET SELECTOR ──────────────────────────────────────── */
 
 .asset-selector {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    flex-shrink: 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    width: 100%;
+    margin-top: 20px;
 }
 
 .asset-btn {
     flex: 1;
-    min-width: 120px;
+    min-width: 0;
+    width:100%;
     background: var(--bg-panel);
     border: 1px solid var(--border);
     border-radius: 8px;

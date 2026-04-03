@@ -8,8 +8,8 @@ public class Commodity
     public double Price { get; private set; }
     public double Variation  { get; private set; }
     public double Volatility { get; }
-    public const double Dmr = 0.2; //degree of mean regresssion
-    public bool IsUnlocked => true;
+    public const double MeanRegressionDegree = 0.2; //for prices simulation
+    public bool IsUnlocked { get; set; } = true;
     public double UnlockThreshold = 0;
 
     public Commodity(string name, double price, double volatility)

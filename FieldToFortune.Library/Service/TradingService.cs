@@ -55,7 +55,7 @@ public class TradingService
         var call = new Call(commodity, strikePrice, expiry);
         player.AddCall(call, quantity);
 
-        var description = $"Bought {quantity}x {call.Underlying.Name} Call (Strike: {call.StrikePrice:F2} exp. T+{call.Expiry})";
+        var description = $"Bought CALL {call.Underlying.Name} {quantity}x (Strike: {call.StrikePrice:F2} exp. T+{call.Expiry})";
         var t = new Transaction(TransactionType.CallContract, description, -premium, turn);
         player.AddTransaction(t);
         
@@ -65,17 +65,17 @@ public class TradingService
     public void ExerciseCall(Player player, Call call, int turn)
     {
         var nbCalls = player.Calls[call];
-        var totalPayoff = nbCalls * call.Payoff;
+        var totalCost = nbCalls * call.StrikePrice;
         
         player.RemoveCall(call);
-        if (totalPayoff<=0) return;
 
-        player.Cash += totalPayoff;
+        player.Cash -= totalCost;
+        player.Portfolio.AddCommodity(call.Underlying, nbCalls);
 
         var description =
-            $"Sold {nbCalls}x {call.Underlying.Name} @ {call.StrikePrice:F2} (Market: {nbCalls*call.Underlying.Price:F2})";
+            $"Exercised CALL {call.Underlying.Name} {nbCalls}x @ {nbCalls*call.StrikePrice:F2} (Market: {nbCalls*call.Underlying.Price:F2})";
         
-        var t = new Transaction(TransactionType.CallExercise, description, totalPayoff, turn);
+        var t = new Transaction(TransactionType.CallExercise, description, -totalCost, turn);
         player.AddTransaction(t);
         
     }

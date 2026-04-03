@@ -8,7 +8,7 @@ public class Player
     public Dictionary<Call,int> Calls { get; }
     public List<Transaction> TransactionHistory { get; }
 
-    public const int StartCash = 1000;
+    public int StartCash = 1000;
 
     public Player(String name)
     {
@@ -21,6 +21,7 @@ public class Player
 
     public double NetWorth => Cash + Portfolio.Value();
     public double NetWorthChange => (NetWorth - StartCash) / StartCash;
+    public double Profits => NetWorth - StartCash;
 
     public void AddCall(Call call, int quantity) => Calls[call] = quantity;
     public void RemoveCall(Call call) => Calls.Remove(call);

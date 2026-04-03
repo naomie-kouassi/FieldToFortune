@@ -1,10 +1,9 @@
-﻿@page "/home"
+﻿@page "/market"
 @using FieldToFortune.Model
 @using FieldToFortune.Service
 @inject GameState GameState
 @inject TradingService TradingService
 @inject NavigationManager NavigationManager
-@inject IJSRuntime JSRuntime
 
 
 <!-- ═══════════════════════════════════════════════════════════
@@ -16,26 +15,28 @@
      by the ThemeToggle button in the top bar.
 ═══════════════════════════════════════════════════════════ -->
 
-<div class="home-page">
+
+<div class="market-page">
+
+    <!-- ── HEADER ──────────────────────────────────────────── -->
+    <div class="page-header">
+        <h1 class="page-title">Market</h1>
+    </div>
 
     <!-- ── TOP BAR ─────────────────────────────────────────── -->
     <header class="top-bar">
         <div class="top-bar__left">
-            <span class="stat">Turn <strong>@GameState.CurrentTurn</strong> / @GameState.NbTurns</span>
+            <span class="stat">Turn <strong>@Math.Min(GameState.CurrentTurn, GameState.NbTurns)</strong> / @GameState.NbTurns</span>
         </div>
         <div class="top-bar__center">
-            <span class="stat">Cash <strong>@GameState.Player.Cash.ToString("F2") $</strong></span>
+            <span class="stat">Cash $ <strong>@GameState.Player.Cash.ToString("F2")</strong></span>
             <span class="stat @(GameState.Player.NetWorthChange >= 0 ? "stat--positive" : "stat--negative")">
-                Net Worth <strong>@GameState.Player.NetWorth.ToString("F2") $</strong>
-                <small>(@(GameState.Player.NetWorthChange >= 0 ? "+" : "")@((GameState.Player.NetWorthChange*100).ToString("F1"))%)</small>
+                Net Worth $ <strong>@GameState.Player.NetWorth.ToString("F2")</strong>
+                <small>(@(GameState.Player.NetWorthChange >= 0 ? "+" : "")@((GameState.Player.NetWorthChange * 100).ToString("F1"))%)</small>
             </span>
-            <span class="stat">Target <strong>@GameState.WinningNetWorth $</strong></span>
+            <span class="stat">Target $ <strong>@GameState.WinningNetWorth</strong></span>
         </div>
         <div class="top-bar__right">
-            <!-- Theme toggle -->
-            <button class="theme-toggle" @onclick="ToggleTheme" title="Toggle theme">
-                @(_isDark ? "☀ Light" : "☾ Dark")
-            </button>
             <!-- Next turn -->
             <button class="btn btn--primary" @onclick="OnNextTurn" disabled="@GameState.IsFinished">
                 Next Turn ▶
@@ -43,11 +44,11 @@
         </div>
     </header>
 
-    <!-- ── EVENT BANNER (shown when a market event occurs) ─── -->
-    @if (_lastEvent != null)
+    <!-- ── HEADLINES BANNER (shown when a market event occurs) ─── -->
+    @if (GameState.Market.LastNews != null)
     {
         <div class="event-banner">
-            📰 @_lastEvent
+            [NEWS FLASH] @GameState.Market.LastNews.ToString()
         </div>
     }
 
@@ -61,7 +62,7 @@
             <!-- Selected asset info -->
             <div class="selected-asset">
                 <span class="selected-asset__name">@_selectedCommodity.Name</span>
-                <span class="selected-asset__price">@_selectedCommodity.Price.ToString("F2") $</span>
+                <span class="selected-asset__price">$ @_selectedCommodity.Price.ToString("F2")</span>
                 <span class="variation @(_selectedCommodity.Variation >= 0 ? "variation--up" : "variation--down")">
                     @(_selectedCommodity.Variation >= 0 ? "▲" : "▼")
                     @Math.Abs(_selectedCommodity.Variation * 100).ToString("F1")%
@@ -82,21 +83,12 @@
             @if (_orderType == "buy" || _orderType == "sell")
             {
                 <div class="order-form">
-                    <label class="form-label">
-                        @if (_orderType == "sell")
-                        {
-                            @($"Quantity    ({GameState.Player.Portfolio.Quantity(_selectedCommodity)} in portfolio)")
-                        }
-                        else
-                        {
-                            @("Quantity")
-                        }
-                    </label>
+                    <label class="form-label"> @($"Quantity \t ({GameState.Player.Portfolio.Quantity(_selectedCommodity)} in portfolio)")</label>
                     <input class="form-input" type="number" min="1" @bind="_quantity"
                            @onkeydown="BlockSpecialChars"/>
 
                     <div class="order-cost">
-                        Total : <strong>@((_selectedCommodity.Price * _quantity).ToString("F2")) $</strong>
+                        Total : $ <strong>@((_selectedCommodity.Price * _quantity).ToString("F2"))</strong>
                     </div>
 
                     <button class="btn @(_orderType == "buy" ? "btn--buy" : "btn--sell") btn--full"
@@ -112,17 +104,17 @@
                 <div class="order-form">
                     <label class="form-label">Strike Price ($)</label>
                     <input class="form-input" type="number" step="0.01"
-                           @bind="_strikePrice" />
+                           @bind="_strikePrice"/>
 
                     <label class="form-label">Expiry (turns)</label>
                     <input class="form-input" type="number" min="1" max="5"
-                           @bind="_expiryTurns" />
-                    
+                           @bind="_expiryTurns"/>
+
                     <label class="form-label">Quantity</label>
-                    <input class="form-input" type="number" min="1" @bind="_quantity" />
+                    <input class="form-input" type="number" min="1" @bind="_quantity"/>
 
                     <div class="order-cost">
-                        Premium : <strong>@_callPremium.ToString("F2") $</strong>
+                        Premium : $ <strong>@_callPremium.ToString("F2")</strong>
                     </div>
 
                     <button class="btn btn--call btn--full" @onclick="OnBuyCall">
@@ -145,14 +137,15 @@
                 <div class="active-options">
                     <h3 class="panel-subtitle">Active Options</h3>
                     @foreach (var option in GameState.Player.Calls.Keys)
-                    { @if (option.Underlying == _selectedCommodity)
+                    {
+                        @if (option.Underlying == _selectedCommodity)
                         {
                             <div class="option-card">
-                                <span>CALL @option.Underlying.Name</span>
-                                <span>K = @option.StrikePrice.ToString("F2")$</span>
-                                <span>Expires T+@option.Expiry</span>
+                                <span>CALL @option.Underlying.Name @GameState.Player.Calls[option]x</span>
+                                <span>Strike = $@option.StrikePrice.ToString("F2")</span>
+                                <span>Expires in @option.Expiry turns</span>
                                 <span class="option-card__payoff">
-                                    Payoff : @option.Payoff.ToString("F2")$
+                                    Payoff : $@option.Payoff.ToString("F2")
                                 </span>
                             </div>
                         }
@@ -167,7 +160,8 @@
             <!-- Price chart -->
             <div class="chart-container">
                 <ApexChart TItem="PricePoint"
-                           @key="_selectedCommodity.Name+GameState.CurrentTurn"
+                           Height="@("100%")"
+                           @key="_selectedCommodity.Name + GameState.CurrentTurn"
                            Title="@($"Price History of {_selectedCommodity.Name} ")"
                            Options="_chartOptions"
                            @ref="_chart">
@@ -176,7 +170,7 @@
                                      Name="Price"
                                      SeriesType="SeriesType.Line"
                                      XValue="@(p => p.Turn)"
-                                     YValue="@(p => (decimal)p.Price)" />
+                                     YValue="@(p => (decimal)p.Price)"/>
                 </ApexChart>
             </div>
 
@@ -195,7 +189,7 @@
                         </span>
                         @if (!commodity.IsUnlocked)
                         {
-                            <span class="asset-btn__lock">🔒 @commodity.UnlockThreshold $</span>
+                            <span class="asset-btn__lock">🔒 Get to $ @commodity.UnlockThreshold Net Worth</span>
                         }
                     </button>
                 }
@@ -216,9 +210,9 @@
                     Final net worth : <strong>@GameState.Player.NetWorth.ToString("F2") $</strong>
                 </p>
                 <p class="endgame-stat">
-                    Performance : <strong>@((GameState.Player.NetWorthChange*100).ToString("F1"))%</strong>
+                    Performance : @(GameState.Player.Profits >= 0 ? "+" : "-") $<strong>@(Math.Abs(GameState.Player.Profits).ToString("F2"))</strong>
                 </p>
-                <!-- <button class="btn btn--primary" @onclick="OnRestart">Play Again</button> -->
+                <button class="btn btn--primary" @onclick="OnRestart">Play Again</button>
             </div>
         </div>
     }
@@ -234,8 +228,6 @@
     private int _expiryTurns = 3;
     private string? _message;
     private bool _messageIsError;
-    private string? _lastEvent;
-    private bool _isDark = false;
 
     // Chart
     private ApexChart<PricePoint>? _chart;
@@ -253,7 +245,18 @@
         _strikePrice = double.Round(_selectedCommodity.Price);
         UpdatePriceHistory();
         ConfigureChart();
-        //ApplyTheme();
+        GameState.OnThemeChanged += HandleThemeChange;
+    }
+    
+    private void HandleThemeChange()
+    {
+        ConfigureChart();
+        StateHasChanged(); // Force the chart to re-render with new colors
+    }
+    
+    public void Dispose()
+    {
+        GameState.OnThemeChanged -= HandleThemeChange;
     }
 
     // ── Event Handlers ───────────────────────────────────────
@@ -290,30 +293,24 @@
             ShowMessage($"Call option purchased (premium {_callPremium:F2}$)", false);
         else
             ShowMessage("Insufficient funds for this option.", true);
+        
+        GameState.NotifyStateChanged();;
     }
 
     private void OnNextTurn()
     {
-        TradingService.ExerciseAllCalls(GameState.Player, GameState.CurrentTurn);
-        _lastEvent = GameState.NextTurn();
+        GameState.NextTurn();
         UpdatePriceHistory();
         _message = null;
     }
     
-
-    /***
     private void OnRestart()
     {
-        // Re-inject a fresh GameState — adapt to however your app
-        // initialises GameState (menu screen, DI factory, etc.)
+        // Re-inject a fresh GameState
         NavigationManager.NavigateTo("/menu", forceLoad: true);
-    }***/
-
-    private void ToggleTheme()
-    {
-        _isDark = !_isDark;
-         ApplyTheme();
     }
+
+
 
     // ── Helpers ──────────────────────────────────────────────
     private void UpdatePriceHistory()
@@ -353,7 +350,7 @@
             Stroke = new Stroke { Curve = Curve.Straight, Width = new List<int> { 2 } },
             Grid = new Grid { BorderColor = "rgba(255,255,255,0.08)" },
             
-            Tooltip = new Tooltip { Theme = _isDark ? Mode.Dark : Mode.Light },
+            Tooltip = new Tooltip { Theme = GameState.IsDarkMode ? Mode.Dark : Mode.Light },
         
             Xaxis = new XAxis { Title = new AxisTitle { Text = "Turn" } },
         
@@ -370,18 +367,15 @@
             }
         };
     }
-
-    private async Task ApplyTheme()
-    {
-        // Injects a class on <body> via JS interop to switch CSS variables
-        // See wwwroot/css/app.css for --color-* variable definitions
-        await JSRuntime.InvokeVoidAsync("setTheme", _isDark ? "dark" : "light");
-    }
+    
     
     private void BlockSpecialChars(KeyboardEventArgs e)
     {
         // Block '-', 'e', '+', and '.' to force user to enter integers only
-        if (e.Key == "-" || e.Key == "e" || e.Key == "E" || e.Key == "+" || e.Key == ".") {}
+        if (e.Key == "-" || e.Key == "e" || e.Key == "E" || e.Key == "+" || e.Key == ".")
+        {
+            return;
+        }
     }
 
     // Simple record for chart data points

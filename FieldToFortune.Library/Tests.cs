@@ -35,7 +35,8 @@ public class Tests
 
     public static void TestSimulatedPrice()
     {
-        var pp = new SimulatedPriceProvider([wheat]);
+        Market market = new Market([wheat,coffee]);
+        var pp = new SimulatedPriceProvider(market);
         for (int i = 1; i < 22; i++)
         {
             Console.WriteLine($"{pp.GetPrice(wheat,i):F2}");

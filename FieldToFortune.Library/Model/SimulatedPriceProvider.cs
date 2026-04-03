@@ -15,15 +15,24 @@ public class SimulatedPriceProvider:IPriceProvider
         return _prices[commodity][..lastTurn];
     }
 
-    public double[] GetAllPrices(Commodity commodity)
+    public Dictionary<Commodity, double[]> GetAllPrices()
     {
-        return _prices[commodity];
+        return _prices;
+    }
+
+    public Dictionary<Commodity, double> GetAllPrices(int turn)
+    {
+        var allPrices = new Dictionary<Commodity, double>();
+        foreach (var commodity in _prices.Keys) allPrices[commodity] = _prices[commodity][turn];
+        return allPrices;
     }
     
-    public SimulatedPriceProvider(List<Commodity> commodities)
+    
+    
+    public SimulatedPriceProvider(Market market)
     {
         _prices = new Dictionary<Commodity, double[]>();
-        foreach (var commodity in commodities)
+        foreach (var commodity in market.Commodities)
         {
             _prices[commodity] = SimulatePrices(commodity);
         }
@@ -35,7 +44,7 @@ public class SimulatedPriceProvider:IPriceProvider
         prices[0] = commodity.Price;
 
         double longTermMean = commodity.Price;
-        double kappa = Commodity.Dmr;
+        double kappa = Commodity.MeanRegressionDegree;
         double sigma = commodity.Volatility;
         double dt = 1;
 

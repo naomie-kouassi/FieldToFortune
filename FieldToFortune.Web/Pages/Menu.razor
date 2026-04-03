@@ -19,7 +19,7 @@
             <p class="menu-tagline">Set off on the road to riches!</p>
         </div>
 
-        @if (!_gameStarted)
+        @if (!GameState.HasStarted || GameState.InConfiguration)
         {
             <!-- New game form -->
             <div class="menu-form">
@@ -37,7 +37,7 @@
                             <button class="diff-btn @(_selectedDifficulty == diff ? "diff-btn--active" : "")"
                                     @onclick="() => _selectedDifficulty = diff">
                                 <span class="diff-btn__name">@diff.Name</span>
-                                <span class="diff-btn__target">Target : @diff.Target $</span>
+                                <span class="diff-btn__target">Target: $ @diff.Target</span>
                             </button>
                         }
                     </div>
@@ -70,7 +70,7 @@
                     </div>
                     <div class="recap-item">
                         <span class="recap-item__label">Target</span>
-                        <span class="recap-item__value">@GameState.WinningNetWorth $</span>
+                        <span class="recap-item__value">$ @GameState.WinningNetWorth</span>
                     </div>
                     <div class="recap-item">
                         <span class="recap-item__label">Turn</span>
@@ -79,7 +79,7 @@
                 </div>
 
                 <div class="menu-recap__actions">
-                    <button class="btn btn--primary btn--full" @onclick='() => NavigationManager.NavigateTo("/home")'>
+                    <button class="btn btn--primary btn--full" @onclick='() => NavigationManager.NavigateTo("/market")'>
                         Resume Game
                     </button>
                     <button class="btn btn--outline btn--full" @onclick="OnNewGame">
@@ -97,22 +97,20 @@
     private readonly List<Difficulty> _difficulties = new()
     {
         new("Easy",   1200),
-        new("Medium", 1800),
-        new("Hard",   2500),
+        new("Medium", 1500),
+        new("Hard",   2000),
     };
 
     private string _playerName = "";
     private Difficulty _selectedDifficulty;
     private string? _error;
-    private bool _gameStarted = false;
     private string _currentDifficultyName = "Medium";
 
     protected override void OnInitialized()
     {
         _selectedDifficulty = _difficulties[1]; // Medium default
         // If a game is already running show recap
-        _gameStarted = GameState.CurrentTurn > 1;
-        if (_gameStarted)
+        if (GameState.HasStarted)
             _currentDifficultyName = GetDifficultyName(GameState.WinningNetWorth);
     }
 
@@ -133,13 +131,14 @@
         foreach (var commodity in GameState.Market.Commodities)
             GameState.Player.Portfolio.AddCommodity(commodity, 0);
 
-        _gameStarted = true;
-        NavigationManager.NavigateTo("/home");
+        GameState.HasStarted = true;
+        GameState.NotifyStateChanged();
+        NavigationManager.NavigateTo("/market");
     }
 
     private void OnNewGame()
     {
-        _gameStarted = false;
+        GameState.HasStarted = false;
         _playerName = "";
         _selectedDifficulty = _difficulties[1];
     }
