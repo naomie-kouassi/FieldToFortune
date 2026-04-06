@@ -1,14 +1,23 @@
-// wwwroot/js/theme.js
-// Called from Blazor via JSRuntime.InvokeVoidAsync("setTheme", "dark"|"light")
-
+//Switch theme colors by changing css variables
 window.setTheme = function (theme) {
     document.body.classList.remove("theme-dark", "theme-light");
     document.body.classList.add("theme-" + theme);
-    localStorage.setItem("ftf-theme", theme);
 };
 
 // Restore saved theme on page load
 (function () {
-    const saved = localStorage.getItem("ftf-theme") || "dark";
-    document.body.classList.add("theme-" + saved);
+    const sessionData = sessionStorage.getItem("ftf-game-session");
+    let theme = "light"; // Default theme is light
+
+    if (sessionData) {
+        try {
+            const gameState = JSON.parse(sessionData);
+            if (gameState.IsDarkMode === true) heme = "dark";
+        } 
+        catch (e) {
+            console.error("Failed to parse theme from session", e);
+        }
+    }
+    document.body.classList.remove("theme-dark", "theme-light");
+    document.body.classList.add("theme-" + theme);
 })();

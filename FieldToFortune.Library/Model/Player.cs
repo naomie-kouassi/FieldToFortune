@@ -1,31 +1,64 @@
+using System.Text.Json.Serialization;
+
 namespace FieldToFortune.Model;
 
 public class Player
 {
-    public String Name { get; private set; }
+    public String Name { get; set; }
     public double Cash { get; set; }
-    public Portfolio Portfolio { get; }
-    public Dictionary<Call,int> Calls { get; }
-    public List<Transaction> TransactionHistory { get; }
+    public Portfolio Portfolio { get; set; } = new();
+    public Dictionary<Call, int> Calls { get; set; } = new();
+    public List<Transaction> TransactionHistory { get; set; } = [];
+    public List<double> NetWorthHistory { get; set; }
+    public List<double> NetWorthVariationHistory { get; set; }
 
-    public int StartCash = 1000;
+    public readonly double StartCash = 1000;
 
-    public Player(String name)
+    [JsonConstructor]
+    public Player()
     {
-        Name = name;
-        Portfolio = new Portfolio();
-        Cash = StartCash;
-        Calls = new Dictionary<Call, int>();
-        TransactionHistory = [];
+        Name = "";
+        NetWorthHistory = [];
+        NetWorthVariationHistory = [];
     }
 
-    public double NetWorth => Cash + Portfolio.Value();
-    public double NetWorthChange => (NetWorth - StartCash) / StartCash;
-    public double Profits => NetWorth - StartCash;
+    public Player(string name)
+    {
+        Name = name;
+        Cash = StartCash;
+        NetWorthHistory = [StartCash];
+        NetWorthVariationHistory = [0];
+    }
+
+    public double NetWorth(Market market) => Cash + Portfolio.Value(market);
+
+    public double Progession(Market market) => (NetWorth(market) - StartCash) / StartCash;
+    public double Profits(Market market) => NetWorth(market) - StartCash;
+    public double NetWorthVariation => NetWorthVariationHistory.Last();
 
     public void AddCall(Call call, int quantity) => Calls[call] = quantity;
     public void RemoveCall(Call call) => Calls.Remove(call);
+
+    public void UpdateCalls()
+    {
+        foreach (Call call in Calls.Keys)
+        {
+            call.Expiry--;
+            if(call.Expiry<0) RemoveCall(call);
+        }
+    }
     
     public void AddTransaction(Transaction t) => TransactionHistory.Add(t);
+
+    public void UpdateNetWorthHistory(Market market)
+    {
+        NetWorthHistory.Add(NetWorth(market));
+        var i = NetWorthHistory.Count - 1;
+        if (i > 0)
+        {
+            var variation = (NetWorthHistory[i] - NetWorthHistory[i-1]) / NetWorthHistory[i-1];
+            NetWorthVariationHistory.Add(variation);
+        }
+    }
 
 }

@@ -4,7 +4,7 @@ public class Market
 {
     public List<Commodity> Commodities { get; set; } 
     public const double RiskFreeRate = 0.05;
-    public MarketNews? LastNews { get; private set; }
+    public string? LastNews { get; set; }
 
     public Market()
     {
@@ -23,11 +23,14 @@ public class Market
 
     public Commodity GetCommodity(int index) => Commodities[index];
     
+    public Commodity GetCommodity(string name) => Commodities.First(c => c.Name == name);
+    
 
-    public MarketNews? RefreshMarket(int turn, IPriceProvider priceProvider)
+    public string? RefreshMarket(int turn, IPriceProvider priceProvider)
     {
         ApplyNewPrices(turn, priceProvider);
-        LastNews = GenerateNews(turn, priceProvider);
+        MarketNews? news = GenerateNews(turn, priceProvider);
+        if (news != null) LastNews = news.ToString();
         return LastNews;
     }
 
@@ -35,7 +38,7 @@ public class Market
     {
         foreach (var commodity in Commodities)
         {
-            double newPrice = priceProvider.GetPrice(commodity,turn);
+            var newPrice = priceProvider.GetPrice(commodity.Name,turn);
             commodity.SetPrice(newPrice);
         }
     }

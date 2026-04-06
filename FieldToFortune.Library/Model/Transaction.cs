@@ -4,7 +4,7 @@ namespace FieldToFortune.Model;
 
 public enum TransactionType
 {
-    Purchase, Sale, CallContract, CallExercise
+    Purchase, Sale, CallPremium, CallExercise
 }
 
 public record Transaction(TransactionType Type, string Description, double Amount, int Turn)

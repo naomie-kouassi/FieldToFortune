@@ -4,10 +4,10 @@ namespace FieldToFortune.Model;
 
 public class Commodity
 {
-    public string Name { get; }
-    public double Price { get; private set; }
-    public double Variation  { get; private set; }
-    public double Volatility { get; }
+    public string Name { get; set; }
+    public double Price { get; set; }
+    public double Variation  { get; set; }
+    public double Volatility { get; set; }
     public const double MeanRegressionDegree = 0.2; //for prices simulation
     public bool IsUnlocked { get; set; } = true;
     public double UnlockThreshold = 0;

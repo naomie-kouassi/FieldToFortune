@@ -36,7 +36,7 @@ public class MarketNews
 
     private NewsElements ChooseNews(Market market, int turn, IPriceProvider priceProvider)
     {
-        if (_random.NextDouble() < NewsReliability) return RealNews(turn, priceProvider);
+        if (_random.NextDouble() < NewsReliability) return RealNews(market, turn, priceProvider);
         
         int randomIndex = _random.Next(market.Commodities.Count);
         var commodity = market.GetCommodity(randomIndex);
@@ -46,21 +46,23 @@ public class MarketNews
     }
 
     //News about the commodity that will have the biggest variation next turn
-    private NewsElements RealNews(int turn, IPriceProvider priceProvider)
+    private NewsElements RealNews(Market market, int turn, IPriceProvider priceProvider)
     {
         var currentPrices = priceProvider.GetAllPrices(turn);
         var futurePrices = priceProvider.GetAllPrices(turn + 1);
-        var variations = new Dictionary<Commodity, double > ();
+        var variations = new Dictionary<string, double > ();
 
         foreach (var commodity in currentPrices.Keys)
         {
             variations[commodity] = Math.Abs((futurePrices[commodity]-currentPrices[commodity])/currentPrices[commodity]);
         }
         
-        var targetCommodity = variations.MaxBy(kvp => kvp.Value).Key; 
-        var princeIncrease = futurePrices[targetCommodity] > currentPrices[targetCommodity];
+        var targetCommodityName = variations.MaxBy(kvp => kvp.Value).Key;
+        var princeIncrease = futurePrices[targetCommodityName] > currentPrices[targetCommodityName];
         
         Console.WriteLine("News is true!");
+        
+        var targetCommodity = market.GetCommodity(targetCommodityName);
 
         return new NewsElements(targetCommodity, princeIncrease);
     }

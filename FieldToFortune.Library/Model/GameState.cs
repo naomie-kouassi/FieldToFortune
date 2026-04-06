@@ -1,24 +1,38 @@
+using System.Text.Json.Serialization;
+
 namespace FieldToFortune.Model;
 
 public class GameState
 {
-    public Market Market { get; private set; }
-    public Player Player { get; private set; } = new ("");
-    public double WinningNetWorth { get; private set; } = 1500;
+    public Market Market { get; set; }
+    public Player Player { get; set; } = new ("");
+    public double WinningNetWorth { get; set; } = 1500;
     private const double LosingNetWorth = 500;
 
-    public int CurrentTurn { get; private set; } = 1;
+    public int CurrentTurn { get; set; } = 1;
     public const int NbTurns = 20;
 
-    public bool HasStarted = false;
+    public bool HasStarted { get; set; }= false;
     public bool InConfiguration = true;
 
-    public IPriceProvider PriceProvider { get; private set; }
+    [JsonIgnore] //skipped by the serialazer when loading the game
+    public IPriceProvider PriceProvider { get; set; }
+    
+    public Dictionary<string, double[]> RawPrices { get; set; }
+    
+    [JsonConstructor]
+    public GameState()
+    {
+        Market = new Market([]);
+        PriceProvider = new SimulatedPriceProvider();
+        RawPrices = new Dictionary<string, double[]>();
+    }
 
     public GameState(Market market)
     {
         Market = market;
         PriceProvider = new SimulatedPriceProvider(market);
+        RawPrices = new Dictionary<string, double[]>();
     }
     
     public GameState(Market market, Player player, double winningNetWorth, IPriceProvider priceProvider)
@@ -31,14 +45,11 @@ public class GameState
     
     public event Action? OnChange;
     
-    public MarketNews? NextTurn() { 
-        MarketNews? news = Market.RefreshMarket(CurrentTurn,PriceProvider);
+    public string? NextTurn() { 
+        string? news = Market.RefreshMarket(CurrentTurn,PriceProvider);
 
-        foreach (Call call in Player.Calls.Keys)
-        {
-            call.UpdateCall();
-            if(call.Expiry<0) Player.RemoveCall(call);
-        }
+        Player.UpdateCalls();
+        Player.UpdateNetWorthHistory(Market);
         
         CurrentTurn++;
         NotifyStateChanged();
@@ -56,7 +67,7 @@ public class GameState
         PriceProvider = new SimulatedPriceProvider(Market);
     }
     
-    public bool IsDarkMode { get; private set; } = false;
+    public bool IsDarkMode { get; set; } = false;
     public event Action? OnThemeChanged;
     public void ToggleTheme()
     {
@@ -64,9 +75,9 @@ public class GameState
         OnThemeChanged?.Invoke();
     }
 
-    public bool HasWon => Player.NetWorth >= WinningNetWorth;
+    public bool HasWon => Player.NetWorth(Market) >= WinningNetWorth;
 
-    public bool HasLost=> Player.NetWorth < LosingNetWorth || 
+    public bool HasLost=> Player.NetWorth(Market) < LosingNetWorth || 
                (CurrentTurn>=NbTurns+1 && !HasWon);
     
     public bool IsFinished => HasWon || HasLost;

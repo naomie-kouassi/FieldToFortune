@@ -105,6 +105,7 @@
 .market-page,
 .portfolio-page,
 .history-page,
+.stats-page,
 .menu-page {
     margin-left: min(220px,20vw) ;
     padding: 32px;
@@ -200,7 +201,7 @@
 .badge--buy  { background: rgba(63,185,80,0.12);  color: var(--positive); }
 .badge--sell { background: rgba(248,81,73,0.12);  color: var(--negative); }
 .badge--call { background: rgba(88,166,255,0.12); color: var(--call); }
-.badge--exercise { background: rgba(88,166,255,0.12); color: var(--call); }
+.badge--exercise { background: rgba(162,126,201,0.12); color: var(--exercise); }
 .badge--itm  { background: rgba(63,185,80,0.12);  color: var(--positive); }
 .badge--otm  { background: rgba(248,81,73,0.12);  color: var(--negative); }
 
@@ -245,7 +246,16 @@
 
 /* ── PROGRESS BAR ────────────────────────────────────────── */
 
-.progress-bar-container { display: flex; flex-direction: column; gap: 8px; }
+.progress-bar-section {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    margin-top: 1rem;
+}
+
+.progress-bar-container { display: flex; flex-direction: column; gap: 8px;margin-top: 1rem; }
 
 .progress-bar-track {
     height: 8px;

@@ -2,7 +2,7 @@ namespace FieldToFortune.Model;
 
 public class Call
 {
-    public Commodity Underlying { get; private set; }
+    public Commodity Underlying { get; set; }
     public readonly double StrikePrice;
     public int Expiry { get; set; } //nb of turns left before the call expire
     

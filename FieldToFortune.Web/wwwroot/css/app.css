@@ -23,6 +23,7 @@ body.theme-dark {
     --positive:      #3fb950;
     --negative:      #f85149;
     --call:          #58a6ff;
+    --exercise:      #a27ec9;
     --chart-line:    #d4a843;
 }
 
@@ -40,6 +41,7 @@ body.theme-light {
     --positive:      #1a7f37;
     --negative:      #cf222e;
     --call:          #0969da;
+    --exercise:      #5a3286;
     --chart-line:    #b08020;
 }
 
@@ -297,6 +299,23 @@ body {
 .order-message--success { background: rgba(63,185,80,0.1);  color: var(--positive); border: 1px solid rgba(63,185,80,0.3); }
 .order-message--error   { background: rgba(248,81,73,0.1);  color: var(--negative); border: 1px solid rgba(248,81,73,0.3); }
 
+.rounded-box {
+    /* CRITICAL: This makes the background fit the text width */
+    display: inline-block;
+
+    /* Look and Feel */
+    background-color: rgba(248,81,73,0.1);
+    color: var(--negative);
+    padding: 8px 12px;      
+    border-radius: 5px;
+    border: 1px solid rgba(248,81,73,0.3);
+    font-size: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+
+    /* Ensures text doesn't touch the very edge if it wraps */
+    max-width: 100%;
+}
+
 /* ── ACTIVE OPTIONS ──────────────────────────────────────── */
 
 .active-options { display: flex; flex-direction: column; gap: 8px; }
@@ -411,6 +430,7 @@ body {
 .btn--buy     { background: var(--positive); color: #fff; }
 .btn--sell    { background: var(--negative); color: #fff; }
 .btn--call    { background: var(--call);     color: #fff; }
+.btn--exercise    { background: var(--exercise);     color: #fff; }
 
 .theme-toggle {
     padding: 6px 12px;

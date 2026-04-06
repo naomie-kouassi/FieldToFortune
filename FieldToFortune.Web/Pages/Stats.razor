@@ -1,0 +1,199 @@
+@page "/stats"
+@using FieldToFortune.Model
+@inject GameState GameState
+
+<!-- ═══════════════════════════════════════════════════════
+     STATS PAGE (game stats and net worth evolution chart)
+═══════════════════════════════════════════════════════ -->
+
+<div class="stats-page">
+
+    <!-- ---- HEADER --------------------------- -->
+    <div class="page-header">
+        <h1 class="page-title">Statistics</h1>
+    </div>
+    
+    <!-- ----- STATS ROW -------------------------- -->
+    <section class="stats-row">
+
+        <div class="stat-card">
+            <span class="stat-card__icon">⟳</span>
+            <span class="stat-card__label">Trades Made</span>
+            <span class="stat-card__value">@TradeCount</span>
+        </div>
+
+        <div class="stat-card @(AvgReturnPerTurn >= 0 ? "stat-card--positive" : "stat-card--negative")">
+            <span class="stat-card__icon">◈</span>
+            <span class="stat-card__label">Avg Return / Turn</span>
+            <span class="stat-card__value">
+                @(AvgReturnPerTurn >= 0 ? "+" : "")@AvgReturnPerTurn.ToString("F2")%
+            </span>
+        </div>
+
+        <div class="stat-card">
+            <span class="stat-card__icon">★</span>
+            <span class="stat-card__label">Best Turn</span>
+            <span class="stat-card__value">@BestTurn</span>
+        </div>
+
+        <div class="stat-card @(GameState.Player.Progession(GameState.Market) >= 0 ? "stat-card--positive" : "stat-card--negative")">
+            <span class="stat-card__icon">◉</span>
+            <span class="stat-card__label">Total Gains</span>
+            <span class="stat-card__value">
+                @(GameState.Player.Progession(GameState.Market) >= 0 ? "+" : "-") $@(Math.Abs(GameState.Player.Profits(GameState.Market)).ToString("F2"))
+            </span>
+        </div>
+
+    </section> 
+    
+
+    <!-- ---- NET WORTH CHART -------------------------- -->
+    <div class="chart-container">
+        <ApexChart TItem="NetWorthPoint"
+                   Height="@("100%")"
+                   @key="GameState.IsDarkMode"
+                   Title="@($"Evolution of {GameState.Player.Name}'s Net Worth")"
+                   Options="_chartOptions"
+                   @ref="_chart">
+            <ApexPointSeries TItem="NetWorthPoint"
+                             Items="_netWorthHistory"
+                             Name="Price"
+                             SeriesType="SeriesType.Line"
+                             XValue="@(p => p.Turn)"
+                             YValue="@(p => (decimal)p.NetWorth)"/>
+        </ApexChart>
+    </div>
+    
+    <!-- ── PROGRESS BAR ─────────────────────────── -->
+    <section class="progress-bar-section">
+        <h2 class="section-title">Progress to Target</h2>
+        <div class="progress-bar-container">
+            <div class="progress-bar-track">
+                <div class="progress-bar-fill" style="width: @ProgressPercent%"></div>
+            </div>
+            <div class="progress-bar-labels">
+                <span>$ 1 000 </span>
+                <span class="@(GameState.Player.Progession(GameState.Market) >= 0 ? "text--positive" : "text--negative")">
+                    $ @GameState.Player.NetWorth(GameState.Market).ToString("F0") 
+                </span>
+                <span>@GameState.WinningNetWorth $</span>
+            </div>
+        </div>
+    </section>
+
+    
+</div>
+
+@code {
+    
+    private ApexChartOptions<NetWorthPoint> _chartOptions = new();
+    private List<NetWorthPoint> _netWorthHistory = new();
+    private ApexChart<NetWorthPoint>? _chart;
+
+    private void ConfigureChart()
+    {
+        _chartOptions = new ApexChartOptions<NetWorthPoint>()
+        {
+            Chart = new Chart
+            {
+                Background = "transparent",
+                Toolbar = new Toolbar { Show = false },
+                Animations = new Animations
+                {
+                    Enabled = false,
+                    AnimateGradually = new AnimateGradually { Enabled = false }
+                }
+            },
+            Stroke = new Stroke { Curve = Curve.Straight, Width = new List<int> { 2 } },
+            Grid = new Grid { BorderColor = "rgba(255,255,255,0.08)" },
+
+            Tooltip = new Tooltip { Theme = GameState.IsDarkMode ? Mode.Dark : Mode.Light },
+            
+            Theme = new Theme{ Mode = GameState.IsDarkMode ? Mode.Dark : Mode.Light},
+
+            Xaxis = new XAxis { Title = new AxisTitle { Text = "Turn" } },
+
+            Yaxis = new List<YAxis>
+            {
+                new YAxis
+                {
+                    Title = new AxisTitle { Text = "Net Worth ($)" },
+                    Labels = new YAxisLabels
+                    {
+                        Formatter = "function(val) { return '$'+ val.toFixed(2) }"
+                    }
+                }
+            }
+        };
+    }
+    
+    private void UpdateNetWorthHistory()
+    {
+        // Rebuild price history for the selected commodity up to current turn
+
+        var priceList = GameState.Player.NetWorthHistory;
+        var history = new List<NetWorthPoint>();
+        for (int i = 0; i < GameState.CurrentTurn; i++)
+        {
+            history.Add(new NetWorthPoint(i+1, priceList[i]));
+        }
+
+        _netWorthHistory = history;
+    }
+    
+    protected override void OnInitialized()
+    {
+        UpdateNetWorthHistory();
+        ConfigureChart();
+        GameState.OnThemeChanged += HandleThemeChange;
+    }
+    
+    private void HandleThemeChange()
+    {
+        ConfigureChart();
+        StateHasChanged(); // Force the chart to re-render with new colors
+    }
+
+    private int TradeCount =>
+        GameState.Player.TransactionHistory.Count(t =>
+            t.Type == TransactionType.Purchase || t.Type == TransactionType.Sale);
+
+    private double AvgReturnPerTurn
+    {
+        get
+        {
+            if (GameState.CurrentTurn <= 1) return 0;
+            double totalReturn = (GameState.Player.NetWorth(GameState.Market) - 1000.0) / 1000.0 * 100;
+            return totalReturn / (GameState.CurrentTurn - 1);
+        }
+    }
+    
+    
+    private string BestTurn
+    {
+        get
+        {
+            var best = GameState.Player.NetWorthVariationHistory.Max();
+            var indexOfBest = GameState.Player.NetWorthVariationHistory.IndexOf(best);
+            return best >0
+                ? $"Turn {indexOfBest+1} (+{(best * 100):F1}%)"
+                : "—";
+        }
+    }
+    
+    private double ProgressPercent
+    {
+        get
+        {
+            double target = GameState.WinningNetWorth - GameState.Player.StartCash;
+            if (target <= 0) return 0; // Prevent division by zero or negative targets
+        
+            double ratio = GameState.Player.Profits(GameState.Market) / target;
+            return Math.Clamp(ratio * 100, 0, 100);
+        }
+    }
+    
+    //Record for chart data points
+    private record NetWorthPoint(int Turn, double NetWorth);
+
+}

@@ -2,28 +2,33 @@ namespace FieldToFortune.Model;
 
 public class SimulatedPriceProvider:IPriceProvider
 {
-    private readonly Dictionary<Commodity,double[]> _prices;
+    public Dictionary<string,double[]> _prices {get; set; }
     private readonly Random _random = new();
-
-    public double GetPrice(Commodity commodity, int turn)
-    {
-        return _prices[commodity][turn];
+    
+    public SimulatedPriceProvider() 
+    { 
+        _prices = new Dictionary<string, double[]>();
     }
 
-    public double[] GetFirstPrices(Commodity commodity, int lastTurn)
+    public double GetPrice(string commodityName, int turn)
     {
-        return _prices[commodity][..lastTurn];
+        return _prices[commodityName][turn];
     }
 
-    public Dictionary<Commodity, double[]> GetAllPrices()
+    public double[] GetFirstPrices(string commodityName, int lastTurn)
+    {
+        return _prices[commodityName][..lastTurn];
+    }
+
+    public Dictionary<string, double[]> GetAllPrices()
     {
         return _prices;
     }
 
-    public Dictionary<Commodity, double> GetAllPrices(int turn)
+    public Dictionary<string, double> GetAllPrices(int turn)
     {
-        var allPrices = new Dictionary<Commodity, double>();
-        foreach (var commodity in _prices.Keys) allPrices[commodity] = _prices[commodity][turn];
+        var allPrices = new Dictionary<string, double>();
+        foreach (var commodityName in _prices.Keys) allPrices[commodityName] = _prices[commodityName][turn];
         return allPrices;
     }
     
@@ -31,10 +36,10 @@ public class SimulatedPriceProvider:IPriceProvider
     
     public SimulatedPriceProvider(Market market)
     {
-        _prices = new Dictionary<Commodity, double[]>();
+        _prices = new Dictionary<string, double[]>();
         foreach (var commodity in market.Commodities)
         {
-            _prices[commodity] = SimulatePrices(commodity);
+            _prices[commodity.Name] = SimulatePrices(commodity);
         }
     }
 

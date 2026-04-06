@@ -1,69 +1,68 @@
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace FieldToFortune.Model;
 
 
 public class Portfolio
 {
-    public Dictionary<Commodity, int> Commodities { get; }
+    public Dictionary<string, int> Holdings { get; set; }
     
+    [JsonConstructor]
     public Portfolio()
     {
-        Commodities = new Dictionary<Commodity, int>();
+        Holdings = new Dictionary<string, int>();
     }
 
-    public int Quantity(Commodity commodity) => Commodities[commodity];
-
-    public void AddCommodity(Commodity commodity, int quantity)
+    public int Quantity(string commodityName)
     {
-        Commodities[commodity] = Commodities.GetValueOrDefault(commodity) + quantity;
+        if (Holdings.TryGetValue(commodityName, out int qty))
+        {
+            return qty;
+        }
+        return 0;
     }
 
-    public void RemoveCommodity(Commodity commodity, int quantity)
+    public void AddCommodity(string commodityName, int quantity)
     {
-        int current = Commodities.GetValueOrDefault(commodity);
+        Holdings[commodityName] = Holdings.GetValueOrDefault(commodityName) + quantity;
+    }
+
+    public void RemoveCommodity(string commodityName, int quantity)
+    {
+        int current = Holdings.GetValueOrDefault(commodityName);
 
         if (quantity > current)
         {
             return;
         }
         
-        Commodities[commodity]  = Commodities.GetValueOrDefault(commodity) - quantity;
+        Holdings[commodityName]  = Holdings.GetValueOrDefault(commodityName) - quantity;
     }
 
-    public double Value()
+    public double Value(Market market)
     {
         double value = 0;
 
-        foreach (Commodity commodity in Commodities.Keys)
+        foreach (string commodityName in Holdings.Keys)
         {
-            value+= Commodities[commodity] * commodity.Price;
+            var price = market.GetCommodity(commodityName).Price;
+            value+= Holdings[commodityName] * price;
         }
 
         return value;
     }
-
-    public bool IsEmpty()
-    {
-        foreach (Commodity commodity in Commodities.Keys)
-        {
-            if (Commodities[commodity] != 0) return false;
-        }
-        return true;
-    }
-
+    
     public override string ToString()
     {
         StringBuilder sb = new StringBuilder();
         var i = 1;
 
-        foreach (Commodity commodity in Commodities.Keys)
+        foreach (string commodityName in Holdings.Keys)
         {
-            sb.Append($"{i}. x{Commodities[commodity]} {commodity} \n");
+            sb.Append($"{i}. x{Holdings[commodityName]} {commodityName} \n");
             i++;
         }
-        
-        sb.Append($"\nTotal Value: {Value():F2}$");
         
         return sb.ToString();
     }

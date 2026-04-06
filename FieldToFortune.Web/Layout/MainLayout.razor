@@ -1,13 +1,63 @@
-﻿@inherits LayoutComponentBase
+﻿@using FieldToFortune.Model
+@using FieldToFortune.Service
+@inherits LayoutComponentBase
+@inject SaveService SaveService
+@inject GameState GameState
 
+@if (_isLoaded)
+{
 <div class="page">
     <div class="sidebar">
         <NavMenu/>
     </div>
+    
+<main>
+    <article class="content">
+        @Body
+    </article>
+</main>
 
-    <main>
-        <article class="content">
-            @Body
-        </article>
-    </main>
 </div>
+}
+
+    @if (!_isLoaded)
+    {
+        <text> Loading... </text>
+    }
+
+
+@code{
+
+    private bool _isLoaded;
+
+    protected override async Task OnInitializedAsync()
+    {
+// Try to load. If it returns true, GameState is now updated.
+    _isLoaded = await SaveService.LoadGame(GameState);
+
+        if (_isLoaded)
+        {
+// You might need to notify components that the state changed
+            GameState.NotifyStateChanged();
+            StateHasChanged();
+        }
+    }
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // 1. Actually wait for the JS Interop to finish
+            await SaveService.LoadGame(GameState);
+        
+            // 2. Flip the switch
+            _isLoaded = true;
+        
+            // 3. Force the whole app to see the new data
+            StateHasChanged();
+            GameState.NotifyStateChanged();
+        }
+    }
+
+}
+

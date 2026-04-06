@@ -24,12 +24,12 @@
             </div>
             <div class="summary-card summary-card--accent">
                 <span class="summary-card__label">Net Worth</span>
-                <span class="summary-card__value">$ @GameState.Player.NetWorth.ToString("F2")</span>
+                <span class="summary-card__value">$ @GameState.Player.NetWorth(GameState.Market).ToString("F2")</span>
             </div>
-            <div class="summary-card @(GameState.Player.NetWorthChange >= 0 ? "summary-card--positive" : "summary-card--negative")">
+            <div class="summary-card @(GameState.Player.Progession (GameState.Market)>= 0 ? "summary-card--positive" : "summary-card--negative")">
                 <span class="summary-card__label">Performance</span>
                 <span class="summary-card__value">
-                    @(GameState.Player.NetWorthChange >= 0 ? "+" : "")@((GameState.Player.NetWorthChange*100).ToString("F1"))%
+                    @(GameState.Player.Progession(GameState.Market) >= 0 ? "+" : "")@((GameState.Player.Progession(GameState.Market)*100).ToString("F1"))%
                 </span>
             </div>
         </div>
@@ -56,13 +56,13 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var (commodity, quantity) in Holdings)
+                    @foreach (var commodity in Holdings)
                     {
                         <tr>
                             <td class="td--name">@commodity.Name</td>
-                            <td class="text-right">@quantity</td>
+                            <td class="text-right">@GameState.Player.Portfolio.Quantity(commodity.Name)</td>
                             <td class="text-right mono">@commodity.Price.ToString("F2") $</td>
-                            <td class="text-right mono">@((commodity.Price * quantity).ToString("F2")) $</td>
+                            <td class="text-right mono">@((commodity.Price * GameState.Player.Portfolio.Quantity(commodity.Name)).ToString("F2")) $</td>
                             <td class="text-right mono @(commodity.Variation >= 0 ? "text--positive" : "text--negative")">
                                 @(commodity.Variation >= 0 ? "+" : "")@((commodity.Variation * 100).ToString("F1"))%
                             </td>
@@ -85,91 +85,82 @@
         {
             <table class="data-table">
                 <thead>
-                    <tr>
-                        <th>Underlying</th>
-                        <th class="text-right">Strike Price</th>
-                        <th class="text-right">Current Price</th>
-                        <th class="text-right">Expires</th>
-                        <th class="text-right">Payoff</th>
-                        <th class="text-right">Status</th>
-                        <th></th>
-                    </tr>
+                <tr>
+                    <th>Underlying</th>
+                    <th class="text-right">Strike Price</th>
+                    <th class="text-right">Current Price</th>
+                    <th class="text-right">Expires</th>
+                    <th class="text-right">Payoff</th>
+                    <th class="text-right">Status</th>
+                    <th></th>
+                </tr>
                 </thead>
                 <tbody>
-                    @foreach (var option in GameState.Player.Calls.Keys)
-                    {
-                        <tr>
-                            <td class="td--name">@option.Underlying.Name</td>
-                            <td class="text-right mono">$ @option.StrikePrice.ToString("F2")</td>
-                            <td class="text-right mono">$ @option.Underlying.Price.ToString("F2")</td>
-                            <td class="text-right">T+@option.Expiry</td>
-                            <td class="text-right mono @(option.Payoff > 0 ? "text--positive" : "text--negative")">
-                                $ @option.Payoff.ToString("F2") 
-                            </td>
-                            <td class="text-right">
-                                <span class="badge @(option.Payoff > 0 ? "badge--itm" : "badge--otm")">
-                                    @(option.Payoff > 0 ? "In the money" : "Out of the money")
-                                </span>
-                            </td>
-                            <td>
-                                @if (option.IsAtExerciceDate && option.Payoff > 0)
-                                {
-                                    <button class="btn btn--call btn--small"
-                                            @onclick="() => OnExercise(option)">
-                                        Exercise
-                                    </button>
-                                }
-                            </td>
-                        </tr>
-                    }
+                @foreach (var option in GameState.Player.Calls.Keys)
+                {
+                    <tr>
+                        <td class="td--name">@option.Underlying.Name</td>
+                        <td class="text-right mono">$ @option.StrikePrice.ToString("F2")</td>
+                        <td class="text-right mono">$ @option.Underlying.Price.ToString("F2")</td>
+                        <td class="text-right">T+@option.Expiry</td>
+                        <td class="text-right mono @(option.Payoff > 0 ? "text--positive" : "text--negative")">
+                            $ @option.Payoff.ToString("F2") 
+                        </td>
+                        <td class="text-right">
+                            <span class="badge @(option.Payoff > 0 ? "badge--itm" : "badge--otm")">
+                                @(option.Payoff > 0 ? "In the money" : "Out of the money")
+                            </span>
+                        </td>
+                        <td>
+                            @if (option.IsAtExerciceDate && option.Payoff > 0)
+                            {
+                                <button class="btn btn--exercise btn--small"
+                                        @onclick="() => OnExercise(option)">
+                                    Exercise
+                                </button>
+                            }
+                        </td>
+                    </tr>
+                }
                 </tbody>
             </table>
         }
     </section>
-
-    <!-- ── Progress toward target ─────────────────────────── -->
-    <section class="portfolio-section">
-        <h2 class="section-title">Progress to Target</h2>
-        <div class="progress-bar-container">
-            <div class="progress-bar-track">
-                <div class="progress-bar-fill" style="width: @ProgressPercent%"></div>
+    
+    
+    <!-- Error message for call exercise fails -->
+        @if (_errorMessage != null)
+        {
+            <div class="rounded-box">
+                @_errorMessage
             </div>
-            <div class="progress-bar-labels">
-                <span>$ 1 000 </span>
-                <span class="@(GameState.Player.NetWorthChange >= 0 ? "text--positive" : "text--negative")">
-                    $ @GameState.Player.NetWorth.ToString("F0") 
-                </span>
-                <span>@GameState.WinningNetWorth $</span>
-            </div>
-        </div>
-    </section>
+        }
 
 </div>
 
 @code {
-    private IEnumerable<KeyValuePair<Commodity, int>> Holdings =>
-        GameState.Player.Portfolio.Commodities.AsEnumerable()
-            .Where(p => p.Value > 0);
+    private IEnumerable<Commodity> Holdings =>
+        GameState.Market.Commodities
+            .Where(c => GameState.Player.Portfolio.Quantity(c.Name) > 0);
 
     private double HoldingsValue =>
-        Holdings.Sum(h => h.Key.Price * h.Value);
-    
+        GameState.Player.Portfolio.Value(GameState.Market);
 
-    private double ProgressPercent
-    {
-        get
-        {
-            double target = GameState.WinningNetWorth - GameState.Player.StartCash;
-            if (target <= 0) return 0; // Prevent division by zero or negative targets
-        
-            double ratio = GameState.Player.Profits / target;
-            return Math.Clamp(ratio * 100, 0, 100);
-        }
-    }
+    private string? _errorMessage;
     
     private void OnExercise(Call option)
     {
-        TradingService.ExerciseCall(GameState.Player, option, GameState.CurrentTurn);
-        GameState.NotifyStateChanged();
+        bool success = TradingService.ExerciseCall(GameState.Player, option, GameState.CurrentTurn)!=null;
+        if (!success)
+        {
+            ShowError($"You need ${option.StrikePrice*GameState.Player.Calls[option]:F2} in cash to exercise this option.");
+        }
+        else GameState.NotifyStateChanged();
+    }
+    
+    private void ShowError(string text)
+    {
+        _errorMessage = text;
     }
 }
+

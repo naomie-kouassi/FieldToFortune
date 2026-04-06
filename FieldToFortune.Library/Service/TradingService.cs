@@ -13,7 +13,7 @@ public class TradingService
         
         //Update player situation
         player.Cash -= cost;
-        player.Portfolio.AddCommodity(commodity, quantity);
+        player.Portfolio.AddCommodity(commodity.Name, quantity);
 
         var description = $"Purchased {commodity.Name} {quantity}x";
 
@@ -27,13 +27,13 @@ public class TradingService
     {
         if (quantity <= 0) return null;
 
-        var availableQuantity = player.Portfolio.Quantity(commodity);
+        var availableQuantity = player.Portfolio.Quantity(commodity.Name);
         if (quantity > availableQuantity) return null;
         
         var gains = commodity.Price*quantity;
         //Update player situation
         player.Cash += gains;
-        player.Portfolio.RemoveCommodity(commodity, quantity);
+        player.Portfolio.RemoveCommodity(commodity.Name, quantity);
         
         var description = $"Sold {commodity.Name} {quantity}x";
         
@@ -56,37 +56,34 @@ public class TradingService
         player.AddCall(call, quantity);
 
         var description = $"Bought CALL {call.Underlying.Name} {quantity}x (Strike: {call.StrikePrice:F2} exp. T+{call.Expiry})";
-        var t = new Transaction(TransactionType.CallContract, description, -premium, turn);
+        var t = new Transaction(TransactionType.CallPremium, description, -premium, turn);
         player.AddTransaction(t);
         
         return t;
     }
 
-    public void ExerciseCall(Player player, Call call, int turn)
+    public Transaction? ExerciseCall(Player player, Call call, int turn)
     {
         var nbCalls = player.Calls[call];
         var totalCost = nbCalls * call.StrikePrice;
         
+        if (player.Cash<totalCost) return null;
+        
         player.RemoveCall(call);
 
         player.Cash -= totalCost;
-        player.Portfolio.AddCommodity(call.Underlying, nbCalls);
+        player.Portfolio.AddCommodity(call.Underlying.Name, nbCalls);
 
         var description =
             $"Exercised CALL {call.Underlying.Name} {nbCalls}x @ {nbCalls*call.StrikePrice:F2} (Market: {nbCalls*call.Underlying.Price:F2})";
         
         var t = new Transaction(TransactionType.CallExercise, description, -totalCost, turn);
         player.AddTransaction(t);
-        
+
+        return t;
+
     }
     
-    public void ExerciseAllCalls(Player player, int turn)
-    {
-        foreach (var call in player.Calls.Keys)
-        {
-            if (call.IsAtExerciceDate) ExerciseCall(player,call, turn);
-        }
-    }
     
     
     //Price of a call computed with Black-Scholes formula

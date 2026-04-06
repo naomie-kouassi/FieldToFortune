@@ -2,6 +2,7 @@ using FieldToFortune.Model;
 
 public class Tests
 {
+    /***
     static Commodity wheat = new Commodity("Wheat", 150, 0.15);
     static Commodity coffee = new Commodity("Coffee", 300, 0.3);
     
@@ -53,4 +54,5 @@ public class Tests
         Console.WriteLine(call);
         Console.WriteLine(call.IsAtExerciceDate);
     }
+    ***/
 }

@@ -33,6 +33,10 @@
                 <span class="nav__icon">◎</span>
                 <span>History</span>
             </NavLink>
+            <NavLink class="nav__link" href="/stats">
+                <span class="nav__icon">❍</span>
+                <span>Stats</span>
+            </NavLink>
         </div>
 
         <div class="nav__footer">
@@ -42,12 +46,12 @@
             </div>
             <div class="nav__worth-info">
                 <span class="nav__turn-label">Net Worth</span>
-                <span class="nav__turn-value @(GameState.Player.NetWorthChange >= 0 ? "text--positive" : "text--negative")">
-                    @GameState.Player.NetWorth.ToString("F2")$
+                <span class="nav__turn-value @(GameState.Player.Progession(GameState.Market) >= 0 ? "text--positive" : "text--negative")">
+                    @GameState.Player.NetWorth(GameState.Market).ToString("F2")$
                 </span>
             </div>
             <NavLink class="nav__link nav__link--menu" href="/menu">
-                <span class="nav__icon">⊙</span>
+                <span class="nav__icon">➤</span>
                 <span>Menu</span>
             </NavLink>
             
@@ -66,6 +70,7 @@
         // Subscribe to the event when the component starts
         GameState.OnChange += StateHasChanged;
         GameState.OnThemeChanged += HandleThemeChange;
+        _ = ApplyTheme();
     }
 
     public void Dispose()
@@ -78,14 +83,12 @@
     private void HandleThemeChange()
     {
         _ = ApplyTheme();
-        StateHasChanged(); // Force the chart to re-render with new colors
+        StateHasChanged(); 
     }
-    
     
     private async Task ApplyTheme()
     {
-        // Injects a class on <body> via JS interop to switch CSS variables
-        // See wwwroot/css/app.css for --color-* variable definitions
+        // Calls JavaScript function theme.js to switch the colors' CSS variables
         await JSRuntime.InvokeVoidAsync("setTheme", GameState.IsDarkMode ? "dark" : "light");
     }
 }

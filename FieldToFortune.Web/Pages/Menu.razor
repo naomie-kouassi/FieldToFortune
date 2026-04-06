@@ -108,6 +108,7 @@
 
     protected override void OnInitialized()
     {
+        _playerName = GameState.Player.Name;
         _selectedDifficulty = _difficulties[1]; // Medium default
         // If a game is already running show recap
         if (GameState.HasStarted)
@@ -129,7 +130,7 @@
 
         // Re-init portfolio with all commodities
         foreach (var commodity in GameState.Market.Commodities)
-            GameState.Player.Portfolio.AddCommodity(commodity, 0);
+            GameState.Player.Portfolio.AddCommodity(commodity.Name, 0);
 
         GameState.HasStarted = true;
         GameState.NotifyStateChanged();
@@ -139,7 +140,7 @@
     private void OnNewGame()
     {
         GameState.HasStarted = false;
-        _playerName = "";
+        _playerName = GameState.Player.Name;
         _selectedDifficulty = _difficulties[1];
     }
 

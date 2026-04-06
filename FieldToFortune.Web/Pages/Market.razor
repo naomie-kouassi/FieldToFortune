@@ -1,9 +1,11 @@
 ﻿@page "/market"
+@using System.Net.NetworkInformation
 @using FieldToFortune.Model
 @using FieldToFortune.Service
 @inject GameState GameState
 @inject TradingService TradingService
 @inject NavigationManager NavigationManager
+@inject SaveService SaveService
 
 
 <!-- ═══════════════════════════════════════════════════════════
@@ -30,9 +32,9 @@
         </div>
         <div class="top-bar__center">
             <span class="stat">Cash $ <strong>@GameState.Player.Cash.ToString("F2")</strong></span>
-            <span class="stat @(GameState.Player.NetWorthChange >= 0 ? "stat--positive" : "stat--negative")">
-                Net Worth $ <strong>@GameState.Player.NetWorth.ToString("F2")</strong>
-                <small>(@(GameState.Player.NetWorthChange >= 0 ? "+" : "")@((GameState.Player.NetWorthChange * 100).ToString("F1"))%)</small>
+            <span class="stat @(GameState.Player.Progession(GameState.Market) >= 0 ? "stat--positive" : "stat--negative")">
+                Net Worth $ <strong>@GameState.Player.NetWorth(GameState.Market).ToString("F2")</strong>
+                <small>(@(GameState.Player.Progession(GameState.Market) >= 0 ? "+" : "")@((GameState.Player.Progession(GameState.Market) * 100).ToString("F1"))%)</small>
             </span>
             <span class="stat">Target $ <strong>@GameState.WinningNetWorth</strong></span>
         </div>
@@ -83,9 +85,10 @@
             @if (_orderType == "buy" || _orderType == "sell")
             {
                 <div class="order-form">
-                    <label class="form-label"> @($"Quantity \t ({GameState.Player.Portfolio.Quantity(_selectedCommodity)} in portfolio)")</label>
+                    <label class="form-label"> @($"Quantity \t ({GameState.Player.Portfolio.Quantity(_selectedCommodity.Name)} in portfolio)")</label>
                     <input class="form-input" type="number" min="1" @bind="_quantity"
-                           @onkeydown="BlockSpecialChars"/>
+                           @onkeydown="HandleIntegerKeyDown" 
+                           @onkeydown:preventDefault="shouldBlock"/>
 
                     <div class="order-cost">
                         Total : $ <strong>@((_selectedCommodity.Price * _quantity).ToString("F2"))</strong>
@@ -104,14 +107,21 @@
                 <div class="order-form">
                     <label class="form-label">Strike Price ($)</label>
                     <input class="form-input" type="number" step="0.01"
-                           @bind="_strikePrice"/>
+                           @bind="_strikePrice"
+                           @onkeydown="HandleDoubleKeyDown" 
+                           @onkeydown:preventDefault="shouldBlock"
+                           />
 
                     <label class="form-label">Expiry (turns)</label>
                     <input class="form-input" type="number" min="1" max="5"
-                           @bind="_expiryTurns"/>
+                           @bind="_expiryTurns"
+                           @onkeydown="HandleIntegerKeyDown" 
+                           @onkeydown:preventDefault="shouldBlock"/>
 
                     <label class="form-label">Quantity</label>
-                    <input class="form-input" type="number" min="1" @bind="_quantity"/>
+                    <input class="form-input" type="number" min="1" @bind="_quantity"
+                           @onkeydown="HandleIntegerKeyDown" 
+                           @onkeydown:preventDefault="shouldBlock"/>
 
                     <div class="order-cost">
                         Premium : $ <strong>@_callPremium.ToString("F2")</strong>
@@ -161,7 +171,7 @@
             <div class="chart-container">
                 <ApexChart TItem="PricePoint"
                            Height="@("100%")"
-                           @key="_selectedCommodity.Name + GameState.CurrentTurn"
+                           @key="_selectedCommodity.Name"
                            Title="@($"Price History of {_selectedCommodity.Name} ")"
                            Options="_chartOptions"
                            @ref="_chart">
@@ -174,7 +184,7 @@
                 </ApexChart>
             </div>
 
-            <!-- Asset selector buttons -->
+            <!--f Asset selector buttons -->
             <div class="asset-selector">
                 @foreach (var commodity in GameState.Market.Commodities)
                 {
@@ -207,10 +217,10 @@
                     @(GameState.HasWon ? "Victory!" : "Game Over")
                 </h1>
                 <p class="endgame-stat">
-                    Final net worth : <strong>@GameState.Player.NetWorth.ToString("F2") $</strong>
+                    Final net worth : <strong>@GameState.Player.NetWorth(GameState.Market).ToString("F2") $</strong>
                 </p>
                 <p class="endgame-stat">
-                    Performance : @(GameState.Player.Profits >= 0 ? "+" : "-") $<strong>@(Math.Abs(GameState.Player.Profits).ToString("F2"))</strong>
+                    Performance : @(GameState.Player.Profits(GameState.Market) >= 0 ? "+" : "-") $<strong>@(Math.Abs(GameState.Player.Profits(GameState.Market)).ToString("F2"))</strong>
                 </p>
                 <button class="btn btn--primary" @onclick="OnRestart">Play Again</button>
             </div>
@@ -221,7 +231,7 @@
 
 @code {
     // ── State ────────────────────────────────────────────────
-    private Commodity _selectedCommodity = default!;
+    private Commodity _selectedCommodity = null!;
     private string _orderType = "buy";
     private int _quantity = 1;
     private double _strikePrice;
@@ -241,16 +251,23 @@
     // ── Lifecycle ────────────────────────────────────────────
     protected override void OnInitialized()
     {
-        _selectedCommodity = GameState.Market.Commodities.First();
-        _strikePrice = double.Round(_selectedCommodity.Price);
-        UpdatePriceHistory();
+        _selectedCommodity = GameState.Market.Commodities.FirstOrDefault(c => c.Name == "Wheat") 
+                             ?? GameState.Market.Commodities.First();
+        OnSelectCommodity(_selectedCommodity);
         ConfigureChart();
         GameState.OnThemeChanged += HandleThemeChange;
     }
     
     private void HandleThemeChange()
     {
-        ConfigureChart();
+        _chartOptions.Theme.Mode = GameState.IsDarkMode ? Mode.Dark : Mode.Light;
+        _chartOptions.Tooltip.Theme = GameState.IsDarkMode ? Mode.Dark : Mode.Light;
+        
+        if (_chart != null)
+        {
+            _ = _chart.UpdateOptionsAsync(false, true, false);
+        }
+        
         StateHasChanged(); // Force the chart to re-render with new colors
     }
     
@@ -290,17 +307,36 @@
             GameState.Player, _selectedCommodity, _strikePrice, _expiryTurns, _quantity, GameState.CurrentTurn);
 
         if (option != null)
-            ShowMessage($"Call option purchased (premium {_callPremium:F2}$)", false);
+            ShowMessage($"Call option purchased (premium ${_callPremium:F2})", false);
         else
             ShowMessage("Insufficient funds for this option.", true);
         
         GameState.NotifyStateChanged();;
     }
 
-    private void OnNextTurn()
+    private async Task OnNextTurn()
     {
         GameState.NextTurn();
-        UpdatePriceHistory();
+        if (GameState.CurrentTurn > GameState.NbTurns) return;
+        
+        _selectedCommodity = GameState.Market.Commodities
+            .FirstOrDefault(c => c.Name == _selectedCommodity.Name) ?? _selectedCommodity;
+        
+        await SaveService.SaveGame(GameState);
+
+        Console.WriteLine($"Selected commodity is: {_selectedCommodity.Name}");
+            
+        var newPrice = GameState.PriceProvider.GetPrice(_selectedCommodity.Name, GameState.CurrentTurn-1);
+    
+        // 2. Add just the single new point to your existing list
+        _priceHistory.Add(new PricePoint(GameState.CurrentTurn, newPrice));
+
+        // 3. Tell ApexCharts to "Animate" to the new point
+        if (_chart != null)
+        {
+            _ = _chart.UpdateSeriesAsync(true);
+        }
+
         _message = null;
     }
     
@@ -317,11 +353,13 @@
     {
         // Rebuild price history for the selected commodity up to current turn
 
-        var priceList = GameState.PriceProvider.GetFirstPrices(_selectedCommodity, GameState.CurrentTurn);
+        var priceList = GameState.PriceProvider.GetFirstPrices(_selectedCommodity.Name, GameState.CurrentTurn);
         var history = new List<PricePoint>();
-        for (int i = 0; i < GameState.CurrentTurn; i++)
+        var turn = 1;
+        foreach (var price in priceList)
         {
-            history.Add(new PricePoint(i+1, priceList[i]));
+            history.Add(new PricePoint(turn, price));
+            turn++;
         }
 
         _priceHistory = history;
@@ -343,12 +381,16 @@
                 Toolbar = new Toolbar { Show = false },
                 Animations = new Animations { 
                     Enabled = true, 
-                    AnimateGradually = new AnimateGradually{ Enabled = false }
+                    Speed=800,
+                    Easing = Easing.Linear,
+                    AnimateGradually = new AnimateGradually{ Enabled = true }
                     
                 }
             },
             Stroke = new Stroke { Curve = Curve.Straight, Width = new List<int> { 2 } },
             Grid = new Grid { BorderColor = "rgba(255,255,255,0.08)" },
+            
+            Theme = new Theme{ Mode = GameState.IsDarkMode ? Mode.Dark : Mode.Light},
             
             Tooltip = new Tooltip { Theme = GameState.IsDarkMode ? Mode.Dark : Mode.Light },
         
@@ -369,13 +411,35 @@
     }
     
     
-    private void BlockSpecialChars(KeyboardEventArgs e)
+    private bool _isInitialLoad = true;
+
+    protected override void OnAfterRender(bool firstRender)
     {
-        // Block '-', 'e', '+', and '.' to force user to enter integers only
-        if (e.Key == "-" || e.Key == "e" || e.Key == "E" || e.Key == "+" || e.Key == ".")
+        if (firstRender)
         {
-            return;
+            // Give it a tiny delay to ensure the first 'static' draw is done
+            _isInitialLoad = false;
         }
+    }
+    
+    private bool shouldBlock = false;
+
+    private void HandleIntegerKeyDown(KeyboardEventArgs e)
+    {
+        // Define the "Illegal" keys
+        var forbidden = new[] { "-", "e", "E", "+", ".",",","^","`" };
+        
+        // If the key is in our forbidden list, set shouldBlock to true
+        shouldBlock = forbidden.Contains(e.Key);
+    }
+    
+    private void HandleDoubleKeyDown(KeyboardEventArgs e)
+    {
+        // Define the "Illegal" keys
+        var forbidden = new[] { "-", "e", "E", "+",",","^","`" };
+        
+        // If the key is in our forbidden list, set shouldBlock to true
+        shouldBlock = forbidden.Contains(e.Key);
     }
 
     // Simple record for chart data points
