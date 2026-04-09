@@ -15,10 +15,10 @@ public class TradingService
         player.Cash -= cost;
         player.Portfolio.AddCommodity(commodity.Name, quantity);
 
-        var description = $"Purchased {commodity.Name} {quantity}x";
+        var description = $"Purchased {quantity}x {commodity.Name}";
 
         var t = new Transaction(TransactionType.Purchase, description, -cost, turn);
-        player.AddTransaction(t);
+        player.Stats.AddTransaction(t);
         
         return t;
     }
@@ -35,10 +35,10 @@ public class TradingService
         player.Cash += gains;
         player.Portfolio.RemoveCommodity(commodity.Name, quantity);
         
-        var description = $"Sold {commodity.Name} {quantity}x";
+        var description = $"Sold {quantity}x {commodity.Name}";
         
         var t = new Transaction(TransactionType.Sale, description, gains, turn);
-        player.AddTransaction(t);
+        player.Stats.AddTransaction(t);
 
         return t;
     }
@@ -47,38 +47,38 @@ public class TradingService
     {
         if (quantity <= 0 || strikePrice<=0 || expiry<=0) return null;
         
-        var premium = quantity*ComputePremium(commodity,strikePrice, expiry);
+        var premium = ComputePremium(commodity,strikePrice, expiry, quantity);
         if  (player.Cash<premium) return null;
         
         //Update player
         player.Cash -= premium;
-        var call = new Call(commodity, strikePrice, expiry);
-        player.AddCall(call, quantity);
+        var call = new Call(commodity, strikePrice, expiry, quantity);
+        player.AddCall(call);
 
-        var description = $"Bought CALL {call.Underlying.Name} {quantity}x (Strike: {call.StrikePrice:F2} exp. T+{call.Expiry})";
+        var description = $"Bought CALL {quantity}x {call.Underlying.Name} (Strike: {call.StrikePrice:F2} exp. T+{call.Expiry})";
         var t = new Transaction(TransactionType.CallPremium, description, -premium, turn);
-        player.AddTransaction(t);
+        player.Stats.AddTransaction(t);
         
         return t;
     }
 
     public Transaction? ExerciseCall(Player player, Call call, int turn)
     {
-        var nbCalls = player.Calls[call];
-        var totalCost = nbCalls * call.StrikePrice;
+        var nbCommodities = call.Quantity;
+        var totalCost = nbCommodities * call.StrikePrice;
         
         if (player.Cash<totalCost) return null;
         
         player.RemoveCall(call);
-
         player.Cash -= totalCost;
-        player.Portfolio.AddCommodity(call.Underlying.Name, nbCalls);
+        player.Portfolio.AddCommodity(call.Underlying.Name, nbCommodities);
+        player.HasExercisableCalls = false;
 
         var description =
-            $"Exercised CALL {call.Underlying.Name} {nbCalls}x @ {nbCalls*call.StrikePrice:F2} (Market: {nbCalls*call.Underlying.Price:F2})";
+            $"Exercised CALL {nbCommodities}x {call.Underlying.Name} @ {call.StrikePrice:F2} (Market: {call.Underlying.Price:F2})";
         
         var t = new Transaction(TransactionType.CallExercise, description, -totalCost, turn);
-        player.AddTransaction(t);
+        player.Stats.AddTransaction(t);
 
         return t;
 
@@ -87,7 +87,7 @@ public class TradingService
     
     
     //Price of a call computed with Black-Scholes formula
-    public double ComputePremium(Commodity underlying, double strikePrice, int expiry) {
+    public double ComputePremium(Commodity underlying, double strikePrice, int expiry, int quantity) {
         double S = underlying.Price;
         double K = strikePrice;
         int T = expiry;
@@ -99,7 +99,7 @@ public class TradingService
 
         double C = S * CumulativeNormal(d1) - K * Math.Exp(-r * T) * CumulativeNormal(d2);
 
-        return C;
+        return quantity * C;
         
     }
     

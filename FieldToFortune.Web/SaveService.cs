@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using Microsoft.JSInterop;
 using System.Text.Json;
 using System.Threading.Tasks;
@@ -20,7 +21,7 @@ namespace FieldToFortune.Service
         {
             // We use options to ensure the JSON is clean
             var options = new JsonSerializerOptions { WriteIndented = false };
-            state.RawPrices = state.PriceProvider.GetAllPrices();
+            if(!state.RawPrices.Any()) state.RawPrices = state.PriceProvider.GetAllPrices();
             var json = JsonSerializer.Serialize(state, options);
             await _js.InvokeVoidAsync("sessionStorage.setItem", Key, json);
             Console.WriteLine("Saving...");
@@ -44,6 +45,8 @@ namespace FieldToFortune.Service
                     currentState.CurrentTurn = loadedData.CurrentTurn;
                     currentState.IsDarkMode = loadedData.IsDarkMode;
                     currentState.HasStarted = loadedData.HasStarted;
+                    currentState.WinningNetWorth = loadedData.WinningNetWorth;
+                    currentState.FirstGame = loadedData.FirstGame;
                     var newProvider = new SimulatedPriceProvider(); 
                     newProvider._prices = loadedData.RawPrices;
                     currentState.PriceProvider = newProvider;

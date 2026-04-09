@@ -12,7 +12,7 @@ window.setTheme = function (theme) {
     if (sessionData) {
         try {
             const gameState = JSON.parse(sessionData);
-            if (gameState.IsDarkMode === true) heme = "dark";
+            if (gameState.IsDarkMode === true) theme = "dark";
         } 
         catch (e) {
             console.error("Failed to parse theme from session", e);

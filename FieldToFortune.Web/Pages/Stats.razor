@@ -1,6 +1,7 @@
 @page "/stats"
 @using FieldToFortune.Model
 @inject GameState GameState
+@implements IDisposable
 
 <!-- ═══════════════════════════════════════════════════════
      STATS PAGE (game stats and net worth evolution chart)
@@ -24,7 +25,7 @@
 
         <div class="stat-card @(AvgReturnPerTurn >= 0 ? "stat-card--positive" : "stat-card--negative")">
             <span class="stat-card__icon">◈</span>
-            <span class="stat-card__label">Avg Return / Turn</span>
+            <span class="stat-card__label">Avg Return Per Turn</span>
             <span class="stat-card__value">
                 @(AvgReturnPerTurn >= 0 ? "+" : "")@AvgReturnPerTurn.ToString("F2")%
             </span>
@@ -36,11 +37,11 @@
             <span class="stat-card__value">@BestTurn</span>
         </div>
 
-        <div class="stat-card @(GameState.Player.Progession(GameState.Market) >= 0 ? "stat-card--positive" : "stat-card--negative")">
+        <div class="stat-card @(Profits >= 0 ? "stat-card--positive" : "stat-card--negative")">
             <span class="stat-card__icon">◉</span>
             <span class="stat-card__label">Total Gains</span>
             <span class="stat-card__value">
-                @(GameState.Player.Progession(GameState.Market) >= 0 ? "+" : "-") $@(Math.Abs(GameState.Player.Profits(GameState.Market)).ToString("F2"))
+                @(Profits >= 0 ? "+" : "-") $@(Math.Abs(Profits).ToString("F2"))
             </span>
         </div>
 
@@ -62,19 +63,19 @@
                              XValue="@(p => p.Turn)"
                              YValue="@(p => (decimal)p.NetWorth)"/>
         </ApexChart>
-    </div>
+    </div> 
     
     <!-- ── PROGRESS BAR ─────────────────────────── -->
     <section class="progress-bar-section">
         <h2 class="section-title">Progress to Target</h2>
         <div class="progress-bar-container">
             <div class="progress-bar-track">
-                <div class="progress-bar-fill" style="width: @ProgressPercent%"></div>
+                <div class="progress-bar-fill" style="width: @(Math.Min(100,ProgressToTarget*100))%"></div>
             </div>
             <div class="progress-bar-labels">
                 <span>$ 1 000 </span>
-                <span class="@(GameState.Player.Progession(GameState.Market) >= 0 ? "text--positive" : "text--negative")">
-                    $ @GameState.Player.NetWorth(GameState.Market).ToString("F0") 
+                <span class="@(Profits >= 0 ? "text--positive" : "text--negative")">
+                    $ @NetWorth.ToString("F0") 
                 </span>
                 <span>@GameState.WinningNetWorth $</span>
             </div>
@@ -89,6 +90,7 @@
     private ApexChartOptions<NetWorthPoint> _chartOptions = new();
     private List<NetWorthPoint> _netWorthHistory = new();
     private ApexChart<NetWorthPoint>? _chart;
+    private PlayerStats.FinancialSnapshot _snapshot = null!;
 
     private void ConfigureChart()
     {
@@ -111,13 +113,13 @@
             
             Theme = new Theme{ Mode = GameState.IsDarkMode ? Mode.Dark : Mode.Light},
 
-            Xaxis = new XAxis { Title = new AxisTitle { Text = "Turn" } },
+            Xaxis = new XAxis { Title = new AxisTitle { Text = "End of Turn" } },
 
             Yaxis = new List<YAxis>
             {
                 new YAxis
                 {
-                    Title = new AxisTitle { Text = "Net Worth ($)" },
+                    Title = new AxisTitle { Text = "Net Worth" },
                     Labels = new YAxisLabels
                     {
                         Formatter = "function(val) { return '$'+ val.toFixed(2) }"
@@ -127,15 +129,15 @@
         };
     }
     
-    private void UpdateNetWorthHistory()
-    {
+    private void RebuildNetWorthHistory()
+    { 
         // Rebuild price history for the selected commodity up to current turn
 
-        var priceList = GameState.Player.NetWorthHistory;
+        var priceList = GameState.Player.Stats.NetWorthHistory;
         var history = new List<NetWorthPoint>();
-        for (int i = 0; i < GameState.CurrentTurn; i++)
+        for (var i = 0; i < priceList.Count; i++)
         {
-            history.Add(new NetWorthPoint(i+1, priceList[i]));
+            history.Add(new NetWorthPoint(i, priceList[i]));
         }
 
         _netWorthHistory = history;
@@ -143,7 +145,8 @@
     
     protected override void OnInitialized()
     {
-        UpdateNetWorthHistory();
+        _snapshot = GameState.Player.Stats.GetSnapshot(GameState.Player, GameState.Market);
+        RebuildNetWorthHistory();
         ConfigureChart();
         GameState.OnThemeChanged += HandleThemeChange;
     }
@@ -153,45 +156,28 @@
         ConfigureChart();
         StateHasChanged(); // Force the chart to re-render with new colors
     }
+    
+    public void Dispose()
+    {
+        GameState.OnThemeChanged -= HandleThemeChange;
+    }
 
-    private int TradeCount =>
-        GameState.Player.TransactionHistory.Count(t =>
-            t.Type == TransactionType.Purchase || t.Type == TransactionType.Sale);
+    private int TradeCount => GameState.Player.Stats.TradeCount;
 
-    private double AvgReturnPerTurn
-    {
-        get
-        {
-            if (GameState.CurrentTurn <= 1) return 0;
-            double totalReturn = (GameState.Player.NetWorth(GameState.Market) - 1000.0) / 1000.0 * 100;
-            return totalReturn / (GameState.CurrentTurn - 1);
-        }
-    }
+    private double AvgReturnPerTurn =>
+        PlayerStats.CalculateAverageReturn(_snapshot.Progression, GameState.CurrentTurn);
+
+    private double ProgressToTarget =>
+        PlayerStats.CalculateProgressToTarget(_snapshot.NetWorth, GameState.WinningNetWorth);
+
+    private string BestTurn => GameState.Player.Stats.BestTurn;
+
+    private double NetWorth => _snapshot.NetWorth;
+    
+
+    private double Profits => _snapshot.Profits;
     
     
-    private string BestTurn
-    {
-        get
-        {
-            var best = GameState.Player.NetWorthVariationHistory.Max();
-            var indexOfBest = GameState.Player.NetWorthVariationHistory.IndexOf(best);
-            return best >0
-                ? $"Turn {indexOfBest+1} (+{(best * 100):F1}%)"
-                : "—";
-        }
-    }
-    
-    private double ProgressPercent
-    {
-        get
-        {
-            double target = GameState.WinningNetWorth - GameState.Player.StartCash;
-            if (target <= 0) return 0; // Prevent division by zero or negative targets
-        
-            double ratio = GameState.Player.Profits(GameState.Market) / target;
-            return Math.Clamp(ratio * 100, 0, 100);
-        }
-    }
     
     //Record for chart data points
     private record NetWorthPoint(int Turn, double NetWorth);

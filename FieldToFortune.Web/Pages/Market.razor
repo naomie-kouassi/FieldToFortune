@@ -1,5 +1,4 @@
 ﻿@page "/market"
-@using System.Net.NetworkInformation
 @using FieldToFortune.Model
 @using FieldToFortune.Service
 @inject GameState GameState
@@ -32,16 +31,16 @@
         </div>
         <div class="top-bar__center">
             <span class="stat">Cash $ <strong>@GameState.Player.Cash.ToString("F2")</strong></span>
-            <span class="stat @(GameState.Player.Progession(GameState.Market) >= 0 ? "stat--positive" : "stat--negative")">
-                Net Worth $ <strong>@GameState.Player.NetWorth(GameState.Market).ToString("F2")</strong>
-                <small>(@(GameState.Player.Progession(GameState.Market) >= 0 ? "+" : "")@((GameState.Player.Progession(GameState.Market) * 100).ToString("F1"))%)</small>
+            <span class="stat @(NetWorthVariation >= 0 ? "stat--positive" : "stat--negative")">
+                Net Worth $ <strong>@Snapshot.NetWorth.ToString("F2")</strong>
+                <small>(@(NetWorthVariation >= 0 ? "▲ +" : "▼ ")@((NetWorthVariation * 100).ToString("F1"))%)</small>
             </span>
             <span class="stat">Target $ <strong>@GameState.WinningNetWorth</strong></span>
         </div>
         <div class="top-bar__right">
             <!-- Next turn -->
-            <button class="btn btn--primary" @onclick="OnNextTurn" disabled="@GameState.IsFinished">
-                Next Turn ▶
+            <button class="btn btn--primary" @onclick="OnNextTurn" disabled="@(!GameState.HasStarted)">
+                @((GameState.CurrentTurn!=GameState.NbTurns && !GameState.IsFinished)? "Next Turn ▶" : "End Game")
             </button>
         </div>
     </header>
@@ -50,7 +49,15 @@
     @if (GameState.Market.LastNews != null)
     {
         <div class="event-banner">
-            [NEWS FLASH] @GameState.Market.LastNews.ToString()
+            [NEWS FLASH] @GameState.Market.LastNews
+        </div>
+    }
+    
+    <!-- ── HEADLINES BANNER (shown when a market event occurs) ─── -->
+    @if (GameState.Player.HasExercisableCalls)
+    {
+        <div class="exercise-banner">
+            Some of your calls expire this turn! Go to your portfolio to exercise them.
         </div>
     }
 
@@ -85,17 +92,18 @@
             @if (_orderType == "buy" || _orderType == "sell")
             {
                 <div class="order-form">
-                    <label class="form-label"> @($"Quantity \t ({GameState.Player.Portfolio.Quantity(_selectedCommodity.Name)} in portfolio)")</label>
+                    <label class="form-label"> Quantity  <strong>@($"({GameState.Player.Portfolio.Quantity(_selectedCommodity.Name)} in portfolio)")</strong></label>
                     <input class="form-input" type="number" min="1" @bind="_quantity"
                            @onkeydown="HandleIntegerKeyDown" 
-                           @onkeydown:preventDefault="shouldBlock"/>
+                           @onkeydown:preventDefault="_shouldBlock"/>
 
                     <div class="order-cost">
                         Total : $ <strong>@((_selectedCommodity.Price * _quantity).ToString("F2"))</strong>
                     </div>
 
                     <button class="btn @(_orderType == "buy" ? "btn--buy" : "btn--sell") btn--full"
-                            @onclick="OnPlaceOrder">
+                            @onclick="OnPlaceOrder"
+                            disabled="@(!GameState.HasStarted)">
                         @(_orderType == "buy" ? "Buy" : "Sell") @_selectedCommodity.Name
                     </button>
                 </div>
@@ -109,25 +117,26 @@
                     <input class="form-input" type="number" step="0.01"
                            @bind="_strikePrice"
                            @onkeydown="HandleDoubleKeyDown" 
-                           @onkeydown:preventDefault="shouldBlock"
+                           @onkeydown:preventDefault="_shouldBlock"
                            />
 
                     <label class="form-label">Expiry (turns)</label>
                     <input class="form-input" type="number" min="1" max="5"
                            @bind="_expiryTurns"
                            @onkeydown="HandleIntegerKeyDown" 
-                           @onkeydown:preventDefault="shouldBlock"/>
+                           @onkeydown:preventDefault="_shouldBlock"/>
 
                     <label class="form-label">Quantity</label>
-                    <input class="form-input" type="number" min="1" @bind="_quantity"
+                    <input class="form-input" type="number" min="1" max="10" @bind="_quantity"
                            @onkeydown="HandleIntegerKeyDown" 
-                           @onkeydown:preventDefault="shouldBlock"/>
+                           @onkeydown:preventDefault="_shouldBlock"/>
 
                     <div class="order-cost">
-                        Premium : $ <strong>@_callPremium.ToString("F2")</strong>
+                        Premium : $ <strong>@CallPremium.ToString("F2")</strong>
                     </div>
 
-                    <button class="btn btn--call btn--full" @onclick="OnBuyCall">
+                    <button class="btn btn--call btn--full" @onclick="OnBuyCall"
+                            disabled="@(!GameState.HasStarted)">
                         Buy Call Option
                     </button>
                 </div>
@@ -146,12 +155,12 @@
             {
                 <div class="active-options">
                     <h3 class="panel-subtitle">Active Options</h3>
-                    @foreach (var option in GameState.Player.Calls.Keys)
+                    @foreach (var option in GameState.Player.Calls)
                     {
                         @if (option.Underlying == _selectedCommodity)
                         {
                             <div class="option-card">
-                                <span>CALL @option.Underlying.Name @GameState.Player.Calls[option]x</span>
+                                <span>CALL @option.Underlying.Name @option.Quantity x</span>
                                 <span>Strike = $@option.StrikePrice.ToString("F2")</span>
                                 <span>Expires in @option.Expiry turns</span>
                                 <span class="option-card__payoff">
@@ -193,7 +202,7 @@
                             @onclick="() => OnSelectCommodity(commodity)"
                             disabled="@(!commodity.IsUnlocked)">
                         <span class="asset-btn__name">@commodity.Name</span>
-                        <span class="asset-btn__price">@commodity.Price.ToString("F2")$</span>
+                        <span class="asset-btn__price">$@commodity.Price.ToString("F2")</span>
                         <span class="asset-btn__var @(commodity.Variation >= 0 ? "var--up" : "var--down")">
                             @(commodity.Variation >= 0 ? "+" : "")@((commodity.Variation * 100).ToString("F1"))%
                         </span>
@@ -209,7 +218,7 @@
     </main>
 
     <!-- ── END OF GAME OVERLAY ──────────────────────────────── -->
-    @if (GameState.IsFinished)
+    @if (_gameEnded)
     {
         <div class="endgame-overlay">
             <div class="endgame-card">
@@ -217,10 +226,10 @@
                     @(GameState.HasWon ? "Victory!" : "Game Over")
                 </h1>
                 <p class="endgame-stat">
-                    Final net worth : <strong>@GameState.Player.NetWorth(GameState.Market).ToString("F2") $</strong>
+                    Final net worth : <strong>$ @Snapshot.NetWorth.ToString("F2")</strong>
                 </p>
                 <p class="endgame-stat">
-                    Performance : @(GameState.Player.Profits(GameState.Market) >= 0 ? "+" : "-") $<strong>@(Math.Abs(GameState.Player.Profits(GameState.Market)).ToString("F2"))</strong>
+                    Performance : <strong>@(Snapshot.Profits >= 0 ? "+" : "-") $@(Math.Abs(Snapshot.Profits).ToString("F2"))</strong>
                 </p>
                 <button class="btn btn--primary" @onclick="OnRestart">Play Again</button>
             </div>
@@ -231,6 +240,7 @@
 
 @code {
     // ── State ────────────────────────────────────────────────
+    private PlayerStats.FinancialSnapshot _snapshot = null!;
     private Commodity _selectedCommodity = null!;
     private string _orderType = "buy";
     private int _quantity = 1;
@@ -238,6 +248,7 @@
     private int _expiryTurns = 3;
     private string? _message;
     private bool _messageIsError;
+    private bool _gameEnded;
 
     // Chart
     private ApexChart<PricePoint>? _chart;
@@ -245,12 +256,15 @@
     private ApexChartOptions<PricePoint> _chartOptions = new();
 
     // ── Computed ─────────────────────────────────────────────
-    private double _callPremium =>
-        _quantity * TradingService.ComputePremium(_selectedCommodity, _strikePrice, _expiryTurns);
+    private double CallPremium => TradingService.ComputePremium(_selectedCommodity, _strikePrice, _expiryTurns,_quantity);
+    private double NetWorthVariation => GameState.Player.Stats.NetWorthVariation;
+    private PlayerStats.FinancialSnapshot Snapshot =>
+        GameState.Player.Stats.GetSnapshot(GameState.Player, GameState.Market);
 
     // ── Lifecycle ────────────────────────────────────────────
     protected override void OnInitialized()
     {
+        _snapshot = GameState.Player.Stats.GetSnapshot(GameState.Player, GameState.Market);
         _selectedCommodity = GameState.Market.Commodities.FirstOrDefault(c => c.Name == "Wheat") 
                              ?? GameState.Market.Commodities.First();
         OnSelectCommodity(_selectedCommodity);
@@ -285,7 +299,7 @@
         _message = null;
     }
 
-    private void OnPlaceOrder()
+    private async Task OnPlaceOrder()
     {
         bool success = _orderType == "buy"
             ? TradingService.BuyCommodity(GameState.Player, _selectedCommodity, _quantity, GameState.CurrentTurn) != null
@@ -293,6 +307,7 @@
 
         if (success)
         {
+            await SaveService.SaveGame(GameState);
             ShowMessage($"{(_orderType == "buy" ? "Bought" : "Sold")} {_quantity}x {_selectedCommodity.Name}", false);
         }
         else
@@ -301,31 +316,36 @@
         }
     }
 
-    private void OnBuyCall()
+    private async Task OnBuyCall()
     {
         var option = TradingService.BuyCall(
             GameState.Player, _selectedCommodity, _strikePrice, _expiryTurns, _quantity, GameState.CurrentTurn);
 
-        if (option != null)
-            ShowMessage($"Call option purchased (premium ${_callPremium:F2})", false);
-        else
-            ShowMessage("Insufficient funds for this option.", true);
+        if (option != null) {
+            await SaveService.SaveGame(GameState);
+            ShowMessage($"Call option purchased (premium ${CallPremium:F2})", false);
+        }
         
-        GameState.NotifyStateChanged();;
-    }
+        else ShowMessage("Insufficient funds for this option.", true);
+            
+        GameState.NotifyStateChanged();
+        }
 
     private async Task OnNextTurn()
     {
         GameState.NextTurn();
-        if (GameState.CurrentTurn > GameState.NbTurns) return;
-        
+        await SaveService.SaveGame(GameState);
+        if (GameState.IsFinished)
+        {
+            _gameEnded = true;
+            GameState.HasStarted = false;
+            await SaveService.SaveGame(GameState);
+            return;
+        }
+        _snapshot = GameState.Player.Stats.GetSnapshot(GameState.Player, GameState.Market);
         _selectedCommodity = GameState.Market.Commodities
             .FirstOrDefault(c => c.Name == _selectedCommodity.Name) ?? _selectedCommodity;
         
-        await SaveService.SaveGame(GameState);
-
-        Console.WriteLine($"Selected commodity is: {_selectedCommodity.Name}");
-            
         var newPrice = GameState.PriceProvider.GetPrice(_selectedCommodity.Name, GameState.CurrentTurn-1);
     
         // 2. Add just the single new point to your existing list
@@ -334,7 +354,7 @@
         // 3. Tell ApexCharts to "Animate" to the new point
         if (_chart != null)
         {
-            _ = _chart.UpdateSeriesAsync(true);
+            _ = _chart.UpdateSeriesAsync();
         }
 
         _message = null;
@@ -342,8 +362,29 @@
     
     private void OnRestart()
     {
-        // Re-inject a fresh GameState
         NavigationManager.NavigateTo("/menu", forceLoad: true);
+    }
+    
+    // ── Keyboard Events Handlers ───────────────────────────────────────
+    
+    private bool _shouldBlock;
+
+    private void HandleIntegerKeyDown(KeyboardEventArgs e)
+    {
+        // Define the "Illegal" keys
+        var forbidden = new[] { "-", "e", "E", "+", ".",",","^","`" };
+        
+        // If the key is in our forbidden list, set shouldBlock to true
+        _shouldBlock = forbidden.Contains(e.Key);
+    }
+    
+    private void HandleDoubleKeyDown(KeyboardEventArgs e)
+    {
+        // Define the "Illegal" keys
+        var forbidden = new[] { "-", "e", "E", "+",",","^","`" };
+        
+        // If the key is in our forbidden list, set shouldBlock to true
+        _shouldBlock = forbidden.Contains(e.Key);
     }
 
 
@@ -400,47 +441,16 @@
             {
                 new YAxis
                 {
-                    Title = new AxisTitle {  Text = "Price ($)" },
+                    Title = new AxisTitle {  Text = "Price" },
                     Labels = new YAxisLabels
                     {
-                        Formatter = "function(val) { return val.toFixed(2) + '$' }"
+                        Formatter = "function(val) { return '$' + val.toFixed(2) }"
                     }
                 }
             }
         };
     }
     
-    
-    private bool _isInitialLoad = true;
-
-    protected override void OnAfterRender(bool firstRender)
-    {
-        if (firstRender)
-        {
-            // Give it a tiny delay to ensure the first 'static' draw is done
-            _isInitialLoad = false;
-        }
-    }
-    
-    private bool shouldBlock = false;
-
-    private void HandleIntegerKeyDown(KeyboardEventArgs e)
-    {
-        // Define the "Illegal" keys
-        var forbidden = new[] { "-", "e", "E", "+", ".",",","^","`" };
-        
-        // If the key is in our forbidden list, set shouldBlock to true
-        shouldBlock = forbidden.Contains(e.Key);
-    }
-    
-    private void HandleDoubleKeyDown(KeyboardEventArgs e)
-    {
-        // Define the "Illegal" keys
-        var forbidden = new[] { "-", "e", "E", "+",",","^","`" };
-        
-        // If the key is in our forbidden list, set shouldBlock to true
-        shouldBlock = forbidden.Contains(e.Key);
-    }
 
     // Simple record for chart data points
     private record PricePoint(int Turn, double Price);

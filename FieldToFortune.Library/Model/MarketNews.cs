@@ -26,7 +26,8 @@ public class MarketNews
 
         string[][] priceDecreaseStories =
         [
-            ["Due to a good harvest, prices of "," are expected to plummet."]
+            ["Due to a good harvest, prices of "," are expected to plummet."],
+            ["New regulations around the sale of ", " could allow prices to fall."]
         ];
         
         if (priceIncrease) return priceIncreaseStories[_random.Next(priceIncreaseStories.Length)];
@@ -38,14 +39,10 @@ public class MarketNews
     {
         if (_random.NextDouble() < NewsReliability) return RealNews(market, turn, priceProvider);
         
-        int randomIndex = _random.Next(market.Commodities.Count);
-        var commodity = market.GetCommodity(randomIndex);
-        var priceIncrease = _random.NextDouble() < 0.5;
-        
-        return new NewsElements(commodity, priceIncrease);
+        return FakeNews(market);
     }
 
-    //News about the commodity that will have the biggest variation next turn
+    //Generate news about the commodity that will have the highest absolute variation the next turn
     private NewsElements RealNews(Market market, int turn, IPriceProvider priceProvider)
     {
         var currentPrices = priceProvider.GetAllPrices(turn);
@@ -65,6 +62,18 @@ public class MarketNews
         var targetCommodity = market.GetCommodity(targetCommodityName);
 
         return new NewsElements(targetCommodity, princeIncrease);
+    }
+
+    //Generate random news about a random commodity of the market
+    private NewsElements FakeNews(Market market)
+    {
+        int randomIndex = _random.Next(market.Commodities.Count);
+        var commodity = market.GetCommodity(randomIndex);
+        var priceIncrease = _random.NextDouble() < 0.5;
+        
+        Console.WriteLine("News is false!");
+        
+        return new NewsElements(commodity, priceIncrease);
     }
 
     public override string ToString()

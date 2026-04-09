@@ -2,24 +2,25 @@ namespace FieldToFortune.Model;
 
 public class Market
 {
-    public List<Commodity> Commodities { get; set; } 
+    public List<Commodity> Commodities { get; set; } = new();
     public const double RiskFreeRate = 0.05;
     public string? LastNews { get; set; }
 
-    public Market()
-    {
-        Commodities = new List<Commodity>();
-    }
 
-    public Market(List<Commodity> commodities)
+    public void InitializeMarket()
     {
-        this.Commodities = commodities;
+        List<Commodity> commodities =
+        [
+            new ("Wheat", 95, 0.03),
+            new ("Corn", 150, 0.05),
+            new ("Orange Juice", 180, 0.08),
+            new ("Coffee", 200, 0.1),
+            new ("Cocoa", 320, 0.16)
+        ];
+        Commodities = commodities;
+        LastNews = null;
     }
-
-    public void AddCommodity(Commodity commodity)
-    {
-        Commodities.Add(commodity);
-    }
+    
 
     public Commodity GetCommodity(int index) => Commodities[index];
     
@@ -30,7 +31,7 @@ public class Market
     {
         ApplyNewPrices(turn, priceProvider);
         MarketNews? news = GenerateNews(turn, priceProvider);
-        if (news != null) LastNews = news.ToString();
+        LastNews = news?.ToString();
         return LastNews;
     }
 
@@ -45,7 +46,7 @@ public class Market
 
     private MarketNews? GenerateNews(int turn, IPriceProvider priceProvider)
     {
-        //A piece of news is generated on a 3-turns rotation, expct for the last one
+        //A piece of news is generated on a 3-turns rotation, except for the last one
         if (turn % 3 != 2 || turn+1>GameState.NbTurns) return null;
         return new MarketNews(this, turn, priceProvider);
     }

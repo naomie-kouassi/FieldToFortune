@@ -3,56 +3,21 @@
 @inject GameState GameState
 
 <!-- ═══════════════════════════════════════════════════════
-     History page (game stats and transaction history)
+     History page (log of all transactions)
 ═══════════════════════════════════════════════════════ -->
 
 <div class="history-page">
 
     <!-- ---- HEADER --------------------------- -->
     <div class="page-header">
-        <h1 class="page-title">History & Stats</h1>
+        <h1 class="page-title">History</h1>
     </div>
-    
-    <!--
-    // ----- STATS ROW -------------------------- //
-    <section class="stats-row">
-
-        <div class="stat-card">
-            <span class="stat-card__icon">⟳</span>
-            <span class="stat-card__label">Trades Made</span>
-            <span class="stat-card__value">@TradeCount</span>
-        </div>
-
-        <div class="stat-card @(AvgReturnPerTurn >= 0 ? "stat-card--positive" : "stat-card--negative")">
-            <span class="stat-card__icon">◈</span>
-            <span class="stat-card__label">Avg Return / Turn</span>
-            <span class="stat-card__value">
-                @(AvgReturnPerTurn >= 0 ? "+" : "")@AvgReturnPerTurn.ToString("F2")%
-            </span>
-        </div>
-
-        <div class="stat-card">
-            <span class="stat-card__icon">★</span>
-            <span class="stat-card__label">Best Asset</span>
-            <span class="stat-card__value">@BestAsset</span>
-        </div>
-
-        <div class="stat-card @(GameState.Player.NetWorthChange >= 0 ? "stat-card--positive" : "stat-card--negative")">
-            <span class="stat-card__icon">◉</span>
-            <span class="stat-card__label">Total Gains</span>
-            <span class="stat-card__value">
-                @(GameState.Player.NetWorthChange >= 0 ? "+" : "-") $@(Math.Abs(GameState.Player.Profits).ToString("F2"))
-            </span>
-        </div>
-
-    </section> 
-    -->
 
     <!-- ---- TRANSACTION LOG -------------------------- -->
     <section class="portfolio-section">
         <h2 class="section-title">Transaction Log</h2>
 
-        @if (!GameState.Player.TransactionHistory.Any())
+        @if (!GameState.Player.Stats.TransactionHistory.Any())
         {
             <p class="empty-state">No transactions yet. Start trading!</p>
         }
@@ -68,7 +33,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var entry in GameState.Player.TransactionHistory.AsEnumerable().Reverse())
+                    @foreach (var entry in GameState.Player.Stats.TransactionHistory.AsEnumerable().Reverse())
                     {
                         <tr>
                             <td class="mono text--muted">@entry.Turn</td>
@@ -91,32 +56,6 @@
 </div>
 
 @code {
-    private int TradeCount =>
-        GameState.Player.TransactionHistory.Count(t =>
-            t.Type == TransactionType.Purchase || t.Type == TransactionType.Sale);
-
-    private double AvgReturnPerTurn
-    {
-        get
-        {
-            if (GameState.CurrentTurn <= 1) return 0;
-            double totalReturn = (GameState.Player.NetWorth(GameState.Market) - 1000.0) / 1000.0 * 100;
-            return totalReturn / (GameState.CurrentTurn - 1);
-        }
-    }
-
-    private string BestAsset
-    {
-        get
-        {
-            var best = GameState.Market.Commodities
-                .OrderByDescending(c => c.Variation)
-                .FirstOrDefault();
-            return best != null
-                ? $"{best.Name} ({(best.Variation >= 0 ? "+" : "")}{(best.Variation * 100):F1}%)"
-                : "—";
-        }
-    }
     
 
     private string GetTypeBadgeClass(TransactionType type) => type switch
@@ -127,4 +66,5 @@
         TransactionType.CallExercise => "badge--exercise",
         _                        => ""
     };
+
 }

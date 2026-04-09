@@ -21,23 +21,14 @@ CultureInfo.DefaultThreadCurrentUICulture = culture;
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
-builder.Services.AddScoped<SaveService>();
 
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+builder.Services.AddScoped<SaveService>();
+builder.Services.AddScoped(_ => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
 builder.Services.AddApexCharts();
 
 
 // ---- Initialize game variables ----
-List<Commodity> commodities =
-[
-    new ("Wheat", 95, 0.03),
-    new ("Corn", 150, 0.05),
-    new ("Orange Juice", 180, 0.08),
-    new ("Coffee", 200, 0.1),
-    new ("Cocoa", 320, 0.12)
-];
-Market market = new Market(commodities);
-var gameState = new GameState(market);
+var gameState = new GameState();
 var tradingService = new TradingService();
 
 

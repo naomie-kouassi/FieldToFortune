@@ -10,7 +10,7 @@
 
 
 <nav class="nav">
-    @if (GameState.HasStarted)
+    @if (!GameState.FirstGame)
     {
         <div class="nav__brand">
             <span class="nav__logo">F2F</span>
@@ -46,8 +46,8 @@
             </div>
             <div class="nav__worth-info">
                 <span class="nav__turn-label">Net Worth</span>
-                <span class="nav__turn-value @(GameState.Player.Progession(GameState.Market) >= 0 ? "text--positive" : "text--negative")">
-                    @GameState.Player.NetWorth(GameState.Market).ToString("F2")$
+                <span class="nav__turn-value @(Snapshot.Progression >=0 ? "text--positive" : "text--negative")">
+                    @Snapshot.NetWorth.ToString("F2")$
                 </span>
             </div>
             <NavLink class="nav__link nav__link--menu" href="/menu">
@@ -65,6 +65,9 @@
 
 
 @code {
+    private PlayerStats.FinancialSnapshot Snapshot =>
+        GameState.Player.Stats.GetSnapshot(GameState.Player, GameState.Market);
+    
     protected override void OnInitialized()
     {
         // Subscribe to the event when the component starts

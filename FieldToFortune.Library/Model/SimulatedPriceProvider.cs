@@ -34,18 +34,18 @@ public class SimulatedPriceProvider:IPriceProvider
     
     
     
-    public SimulatedPriceProvider(Market market)
+    public SimulatedPriceProvider(Market market, int nbPrices)
     {
         _prices = new Dictionary<string, double[]>();
         foreach (var commodity in market.Commodities)
         {
-            _prices[commodity.Name] = SimulatePrices(commodity);
+            _prices[commodity.Name] = SimulatePrices(commodity, nbPrices);
         }
     }
 
-    private double[] SimulatePrices(Commodity commodity)
+    private double[] SimulatePrices(Commodity commodity, int nbPrices)
     {
-        double[] prices = new double[GameState.NbTurns + 1];
+        double[] prices = new double[nbPrices];
         prices[0] = commodity.Price;
 
         double longTermMean = commodity.Price;
@@ -54,7 +54,7 @@ public class SimulatedPriceProvider:IPriceProvider
         double dt = 1;
 
 
-        for (int i=0; i < GameState.NbTurns; i++)
+        for (int i=0; i < nbPrices-1; i++)
         {
             double Z =Gaussian();
             double logPrice = Math.Log(prices[i]);
@@ -70,8 +70,8 @@ public class SimulatedPriceProvider:IPriceProvider
     
     private double Gaussian()
     {
-        double x1 = _random.NextDouble(); //never equal to 1 (cf NextDouble documentation)
-        double x2 = _random.NextDouble();
+        double x1 = 1.0 - _random.NextDouble(); //never equal to 0 (cf NextDouble documentation)
+        double x2 = 1.0 - _random.NextDouble();
 
         return Math.Sqrt(-2.0 * Math.Log(x1)) *
                Math.Sin(2.0 * Math.PI * x2);

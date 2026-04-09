@@ -31,27 +31,16 @@ public class Portfolio
     public void RemoveCommodity(string commodityName, int quantity)
     {
         int current = Holdings.GetValueOrDefault(commodityName);
-
-        if (quantity > current)
+        if (current == quantity)
         {
+            Holdings.Remove(commodityName);
             return;
         }
         
         Holdings[commodityName]  = Holdings.GetValueOrDefault(commodityName) - quantity;
     }
 
-    public double Value(Market market)
-    {
-        double value = 0;
 
-        foreach (string commodityName in Holdings.Keys)
-        {
-            var price = market.GetCommodity(commodityName).Price;
-            value+= Holdings[commodityName] * price;
-        }
-
-        return value;
-    }
     
     public override string ToString()
     {

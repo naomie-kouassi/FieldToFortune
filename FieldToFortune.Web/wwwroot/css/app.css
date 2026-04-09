@@ -145,6 +145,17 @@ body {
     animation: slideIn 0.3s ease;
 }
 
+.exercise-banner {
+    background: linear-gradient(90deg, rgba(88,166,255,0.15), transparent);
+    border-left: 3px solid var(--call);
+    padding: 8px 24px;
+    font-size: 13px;
+    color: var(--call);
+    font-family: 'IBM Plex Mono', monospace;
+    flex-shrink: 0;
+    animation: slideIn 0.3s ease;
+}
+
 @keyframes slideIn {
     from { opacity: 0; transform: translateY(-8px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -299,22 +310,23 @@ body {
 .order-message--success { background: rgba(63,185,80,0.1);  color: var(--positive); border: 1px solid rgba(63,185,80,0.3); }
 .order-message--error   { background: rgba(248,81,73,0.1);  color: var(--negative); border: 1px solid rgba(248,81,73,0.3); }
 
-.rounded-box {
+.exercise-message {
     /* CRITICAL: This makes the background fit the text width */
     display: inline-block;
 
     /* Look and Feel */
-    background-color: rgba(248,81,73,0.1);
-    color: var(--negative);
+    
     padding: 8px 12px;      
     border-radius: 5px;
-    border: 1px solid rgba(248,81,73,0.3);
     font-size: 12px;
     font-family: 'IBM Plex Mono', monospace;
 
     /* Ensures text doesn't touch the very edge if it wraps */
     max-width: 100%;
 }
+
+.exercise-message--success {background: rgba(63,185,80,0.1);  color: var(--positive); border: 1px solid rgba(63,185,80,0.3);}
+.exercise-message--error {background-color: rgba(248,81,73,0.1); color: var(--negative); border: 1px solid rgba(248,81,73,0.3);}
 
 /* ── ACTIVE OPTIONS ──────────────────────────────────────── */
 
