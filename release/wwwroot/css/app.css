@@ -1,0 +1,575 @@
+/* ═══════════════════════════════════════════════════════════
+   FIELD TO FORTUNE — app.css
+   Dark/light theme via CSS variables on body
+   Font: "IBM Plex Mono" (monospaced, terminal feel) +
+         "DM Sans" (clean body text)
+═══════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=DM+Sans:wght@300;400;600&display=swap');
+
+/* ── THEME VARIABLES ─────────────────────────────────────── */
+
+body.theme-dark {
+    --bg-primary:    #0d1117;
+    --bg-secondary:  #161b22;
+    --bg-panel:      #1c2128;
+    --bg-hover:      #21262d;
+    --border:        #30363d;
+    --text-primary:  #e6edf3;
+    --text-secondary:#8b949e;
+    --text-muted:    #484f58;
+    --accent:        #b08020;       /* wheat gold */
+    --accent-hover:  #8a6218;   
+    --positive:      #3fb950;
+    --negative:      #f85149;
+    --call:          #58a6ff;
+    --exercise:      #a27ec9;
+    --chart-line:    #d4a843;
+}
+
+body.theme-light {
+    --bg-primary:    #f6f8fa;
+    --bg-secondary:  #ffffff;
+    --bg-panel:      #ffffff;
+    --bg-hover:      #f3f4f6;
+    --border:        #d0d7de;
+    --text-primary:  #1f2328;
+    --text-secondary:#57606a;
+    --text-muted:    #8c959f;
+    --accent:        #d4a843;
+    --accent-hover:  #e8c06a;
+    --positive:      #1a7f37;
+    --negative:      #cf222e;
+    --call:          #0969da;
+    --exercise:      #5a3286;
+    --chart-line:    #b08020;
+}
+
+/* ── RESET & BASE ────────────────────────────────────────── */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    transition: background 0.3s, color 0.3s;
+}
+
+/* ── TRADING PAGE SHELL ──────────────────────────────────── */
+
+.trading-page {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+}
+
+/* ── TOP BAR ─────────────────────────────────────────────── */
+
+.top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px;
+    height: 56px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+    gap: 16px;
+}
+
+.top-bar__left {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.2;
+}
+
+.game-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--accent);
+    letter-spacing: 0.04em;
+}
+
+.tagline {
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.top-bar__center {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+}
+
+.stat {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-family: 'IBM Plex Mono', monospace;
+}
+
+.stat strong {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.stat small {
+    font-size: 11px;
+    margin-left: 4px;
+}
+
+.stat--positive strong, .stat--positive small { color: var(--positive); }
+.stat--negative strong, .stat--negative small { color: var(--negative); }
+
+.top-bar__right {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+/* ── EVENT BANNER ────────────────────────────────────────── */
+
+.event-banner {
+    background: linear-gradient(90deg, rgba(212,168,67,0.15), transparent);
+    border-left: 3px solid var(--accent);
+    padding: 8px 24px;
+    font-size: 13px;
+    color: var(--accent);
+    font-family: 'IBM Plex Mono', monospace;
+    flex-shrink: 0;
+    animation: slideIn 0.3s ease;
+}
+
+.exercise-banner {
+    background: linear-gradient(90deg, rgba(88,166,255,0.15), transparent);
+    border-left: 3px solid var(--call);
+    padding: 8px 24px;
+    font-size: 13px;
+    color: var(--call);
+    font-family: 'IBM Plex Mono', monospace;
+    flex-shrink: 0;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── MAIN LAYOUT ─────────────────────────────────────────── */
+
+.trading-layout {
+    display: grid;
+    grid-template-columns: 25% 1fr;
+    flex: 1;
+    overflow: hidden;
+}
+
+/* ── ORDER PANEL ─────────────────────────────────────────── */
+
+.order-panel {
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border);
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-height: 80vh;
+    width: 100%;
+}
+
+.panel-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.panel-subtitle {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+}
+
+.selected-asset {
+    background: var(--bg-hover);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.selected-asset__name {
+    font-family: 'IBM Plex Mono', monospace;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.selected-asset__price {
+    font-size: 22px;
+    font-weight: 300;
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--text-primary);
+}
+
+
+.variation {
+    font-size: 13px;
+    font-family: 'IBM Plex Mono', monospace;
+}
+
+.variation--up  { color: var(--positive); }
+.variation--down { color: var(--negative); }
+
+/* ── ORDER TABS ──────────────────────────────────────────── */
+
+.order-tabs {
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.order-tab {
+    flex: 1;
+    padding: 8px 4px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 12px;
+    font-family: 'DM Sans', sans-serif;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.order-tab:hover { background: var(--bg-hover); }
+
+.order-tab--active.order-tab:nth-child(1) { background: rgba(63,185,80,0.15); color: var(--positive); }
+.order-tab--active.order-tab:nth-child(2) { background: rgba(248,81,73,0.15); color: var(--negative); }
+.order-tab--active.order-tab:nth-child(3) { background: rgba(88,166,255,0.15); color: var(--call); }
+
+/* ── ORDER FORM ──────────────────────────────────────────── */
+
+.order-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.form-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.form-input {
+    background: var(--bg-hover);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: var(--text-primary);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 14px;
+    width: 100%;
+    transition: border-color 0.15s;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.order-cost {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-family: 'IBM Plex Mono', monospace;
+}
+
+.order-cost strong { color: var(--text-primary); }
+
+.order-message {
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+}
+
+.order-message--success { background: rgba(63,185,80,0.1);  color: var(--positive); border: 1px solid rgba(63,185,80,0.3); }
+.order-message--error   { background: rgba(248,81,73,0.1);  color: var(--negative); border: 1px solid rgba(248,81,73,0.3); }
+
+.exercise-message {
+    /* CRITICAL: This makes the background fit the text width */
+    display: inline-block;
+
+    /* Look and Feel */
+    
+    padding: 8px 12px;      
+    border-radius: 5px;
+    font-size: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+
+    /* Ensures text doesn't touch the very edge if it wraps */
+    max-width: 100%;
+}
+
+.exercise-message--success {background: rgba(63,185,80,0.1);  color: var(--positive); border: 1px solid rgba(63,185,80,0.3);}
+.exercise-message--error {background-color: rgba(248,81,73,0.1); color: var(--negative); border: 1px solid rgba(248,81,73,0.3);}
+
+/* ── ACTIVE OPTIONS ──────────────────────────────────────── */
+
+.active-options { display: flex; flex-direction: column; gap: 8px; }
+
+.option-card {
+    background: rgba(88,166,255,0.06);
+    border: 1px solid rgba(88,166,255,0.2);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--text-secondary);
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.option-card__payoff { color: var(--call); font-weight: 600; }
+
+/* ── CHART SECTION ───────────────────────────────────────── */
+
+.chart-section {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 20px;
+    min-width: 0;
+    gap: 16px;
+    height:100%
+}
+
+.chart-container {
+    flex: 1;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    min-height: 50vh;
+    max-height: 50vh;
+    
+}
+
+/* ── ASSET SELECTOR ──────────────────────────────────────── */
+
+.asset-selector {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    width: 100%;
+    margin-top: 20px;
+}
+
+.asset-btn {
+    flex: 1;
+    position:relative;
+    min-width: 0;
+    width:100%;
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    cursor: pointer;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    transition: border-color 0.15s, background 0.15s;
+    color: var(--text-primary);
+}
+
+.asset-btn:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: var(--bg-hover);
+}
+
+.asset-btn--active {
+    border-color: var(--accent) !important;
+    background: rgba(212,168,67,0.08) !important;
+}
+
+.asset-btn--locked {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.asset-btn__holdings-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    min-width: 18px;
+    height: 18px;
+    align-items: center;
+    justify-content: center;
+    
+    background: var(--accent);
+    color: #000; 
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    white-space: nowrap;
+}
+
+.asset-btn__risk {
+    position:absolute;
+    bottom: 8px;
+    right: 8px;
+    font-family: 'IBM Plex Mono', monospace;
+    display: flex; gap: 3px; font-size: 8px; color: var(--text-secondary); margin-top: 2px;
+}
+
+.asset-btn__name  { font-weight: 600; font-size: 13px; }
+.asset-btn__price { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--text-secondary); }
+.asset-btn__var   { font-family: 'IBM Plex Mono', monospace; font-size: 11px; }
+.asset-btn__lock  { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+.var--up   { color: var(--positive); }
+.var--down { color: var(--negative); }
+
+/* ── BUTTONS ─────────────────────────────────────────────── */
+
+.btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+}
+
+.btn:hover:not(:disabled) { opacity: 0.85; }
+.btn:active:not(:disabled) { transform: scale(0.97); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn--full { width: 100%; padding: 10px; }
+
+.btn--primary { background: var(--accent);  color: #000; }
+.btn--buy     { background: var(--positive); color: #fff; }
+.btn--sell    { background: var(--negative); color: #fff; }
+.btn--call    { background: var(--call);     color: #fff; }
+.btn--exercise    { background: var(--exercise);     color: #fff; }
+
+.theme-toggle {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 12px;
+    cursor: pointer;
+    font-family: 'IBM Plex Mono', monospace;
+    transition: border-color 0.15s, color 0.15s;
+}
+
+.theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+/* ── END GAME OVERLAY ────────────────────────────────────── */
+
+.endgame-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.75);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.endgame-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 48px 64px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    animation: scaleIn 0.3s ease;
+}
+
+@keyframes scaleIn {
+    from { transform: scale(0.92); opacity: 0; }
+    to   { transform: scale(1);    opacity: 1; }
+}
+
+.endgame-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 42px;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+.endgame-title--win  { color: var(--positive); }
+.endgame-title--loss { color: var(--negative); }
+
+.endgame-stat {
+    font-size: 16px;
+    color: var(--text-secondary);
+}
+
+.endgame-stat strong { color: var(--text-primary); }
+
+.loading-progress {
+    position: relative;
+    display: block;
+    width: 8rem;
+    height: 8rem;
+    margin: 20vh auto 1rem auto; /* Centers it on screen */
+}
+
+.loading-progress circle {
+    fill: none;
+    stroke: #e0e0e0; /* The track color */
+    stroke-width: 0.6rem;
+    transform-origin: 50% 50%;
+    transform: rotate(-90deg);
+}
+
+/* This is the part that actually moves */
+.loading-progress circle:last-child {
+    stroke: #3a0647; /* Your primary theme color */
+    stroke-dasharray: calc(3.14159 * 2 * 40%), 500%;
+    transition: stroke-dasharray 0.05s ease-in-out;
+}
+
+.loading-progress-text {
+    text-align: center;
+    font-weight: bold;
+    color: #333;
+}
+
+.loading-progress-text:after {
+    content: attr(data-progress); /* This injects the percentage number */
+}
