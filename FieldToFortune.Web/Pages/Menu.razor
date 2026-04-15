@@ -100,15 +100,16 @@
 
     private readonly List<Difficulty> _difficulties = new()
     {
-        new("Easy",   1200),
-        new("Medium", 1500),
-        new("Hard",   2000),
+        new("Easy",   1.2*PlayerStats.StartCash),
+        new("Medium", 1.5*PlayerStats.StartCash),
+        new("Hard",   2.0*PlayerStats.StartCash),
     };
 
     private string _playerName = "";
     private Difficulty _selectedDifficulty;
     private string? _error;
     private string _currentDifficultyName = "Medium";
+    private bool _historicalMode;
 
     protected override void OnInitialized()
     {
@@ -147,9 +148,9 @@
 
     private string GetDifficultyName(double target) => target switch
     {
-        1200 => "Easy",
-        1500 => "Medium",
-        2000 => "Hard",
+        1.2*PlayerStats.StartCash => "Easy",
+        1.5*PlayerStats.StartCash => "Medium",
+        2.0*PlayerStats.StartCash => "Hard",
         _ => "Custom"
     };
 

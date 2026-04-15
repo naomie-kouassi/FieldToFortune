@@ -6,7 +6,7 @@ public class PlayerStats
     public List<double> NetWorthHistory { get; set; }
     public List<double> NetWorthVariationHistory { get; set; }
     
-    public const double StartCash  = 1000;
+    public const double StartCash  = 5000;
 
     public PlayerStats()
     {

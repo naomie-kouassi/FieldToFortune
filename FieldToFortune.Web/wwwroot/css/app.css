@@ -18,8 +18,8 @@ body.theme-dark {
     --text-primary:  #e6edf3;
     --text-secondary:#8b949e;
     --text-muted:    #484f58;
-    --accent:        #d4a843;       /* wheat gold */
-    --accent-hover:  #e8c06a;
+    --accent:        #b08020;       /* wheat gold */
+    --accent-hover:  #8a6218;   
     --positive:      #3fb950;
     --negative:      #f85149;
     --call:          #58a6ff;
@@ -36,8 +36,8 @@ body.theme-light {
     --text-primary:  #1f2328;
     --text-secondary:#57606a;
     --text-muted:    #8c959f;
-    --accent:        #b08020;
-    --accent-hover:  #8a6218;
+    --accent:        #d4a843;
+    --accent-hover:  #e8c06a;
     --positive:      #1a7f37;
     --negative:      #cf222e;
     --call:          #0969da;
@@ -225,6 +225,7 @@ body {
     color: var(--text-primary);
 }
 
+
 .variation {
     font-size: 13px;
     font-family: 'IBM Plex Mono', monospace;
@@ -382,6 +383,7 @@ body {
 
 .asset-btn {
     flex: 1;
+    position:relative;
     min-width: 0;
     width:100%;
     background: var(--bg-panel);
@@ -410,6 +412,34 @@ body {
 .asset-btn--locked {
     opacity: 0.45;
     cursor: not-allowed;
+}
+
+.asset-btn__holdings-badge {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    min-width: 18px;
+    height: 18px;
+    align-items: center;
+    justify-content: center;
+    
+    background: var(--accent);
+    color: #000; 
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    white-space: nowrap;
+}
+
+.asset-btn__risk {
+    position:absolute;
+    bottom: 8px;
+    right: 8px;
+    font-family: 'IBM Plex Mono', monospace;
+    display: flex; gap: 3px; font-size: 8px; color: var(--text-secondary); margin-top: 2px;
 }
 
 .asset-btn__name  { font-weight: 600; font-size: 13px; }

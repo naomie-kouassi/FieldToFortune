@@ -67,7 +67,7 @@ public class MarketNews
     //Generate random news about a random commodity of the market
     private NewsElements FakeNews(Market market)
     {
-        int randomIndex = _random.Next(market.Commodities.Count);
+        int randomIndex = _random.Next(market.Commodities.Length);
         var commodity = market.GetCommodity(randomIndex);
         var priceIncrease = _random.NextDouble() < 0.5;
         

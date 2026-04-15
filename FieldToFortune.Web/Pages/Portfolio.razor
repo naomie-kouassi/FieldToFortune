@@ -50,10 +50,10 @@
                 <thead>
                     <tr>
                         <th>Commodity</th>
-                        <th class="text-right">Quantity</th>
-                        <th class="text-right">Current Price</th>
-                        <th class="text-right">Value</th>
-                        <th class="text-right">Variation</th>
+                        <th class="text-center">Quantity</th>
+                        <th class="text-center">Current Price</th>
+                        <th class="text-center">Value</th>
+                        <th class="text-center">Variation</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -61,10 +61,10 @@
                     {
                         <tr>
                             <td class="td--name">@commodity.Name</td>
-                            <td class="text-right">@GameState.Player.Portfolio.Quantity(commodity.Name)</td>
-                            <td class="text-right mono">$ @commodity.Price.ToString("F2")</td>
-                            <td class="text-right mono">$ @((commodity.Price * GameState.Player.Portfolio.Quantity(commodity.Name)).ToString("F2"))</td>
-                            <td class="text-right mono @(commodity.Variation >= 0 ? "text--positive" : "text--negative")">
+                            <td class="text-center">@GameState.Player.Portfolio.Quantity(commodity.Name)</td>
+                            <td class="text-center mono">$ @commodity.Price.ToString("F2")</td>
+                            <td class="text-center mono">$ @((commodity.Price * GameState.Player.Portfolio.Quantity(commodity.Name)).ToString("F2"))</td>
+                            <td class="text-center mono @(commodity.Variation >= 0 ? "text--positive" : "text--negative")">
                                 @(commodity.Variation >= 0 ? "+" : "")@((commodity.Variation * 100).ToString("F1"))%
                             </td>
                         </tr>
@@ -88,11 +88,11 @@
                 <thead>
                 <tr>
                     <th>Underlying</th>
-                    <th class="text-right">Strike Price</th>
-                    <th class="text-right">Market Price</th>
-                    <th class="text-right">Expires</th>
-                    <th class="text-right">Payoff</th>
-                    <th class="text-right">Status</th>
+                    <th class="text-center">Strike Price</th>
+                    <th class="text-center">Market Price</th>
+                    <th class="text-center">Expires</th>
+                    <th class="text-center">Payoff</th>
+                    <th class="text-center">Status</th>
                     <th></th>
                 </tr>
                 </thead>
@@ -100,11 +100,11 @@
                 @foreach (var option in GameState.Player.Calls)
                 {
                     <tr>
-                        <td class="td--name">@option.Underlying.Name  (x @option.Quantity)</td>
-                        <td class="text-right mono">$ @option.StrikePrice.ToString("F2")</td>
-                        <td class="text-right mono">$ @option.Underlying.Price.ToString("F2")</td>
-                        <td class="text-right">T+@option.Expiry</td>
-                        <td class="text-right mono @(option.Payoff > 0 ? "text--positive" : "text--negative")">
+                        <td class="td--name">@option.Underlying.Name  @($"(x{option.Quantity})")</td>
+                        <td class="text-center mono">$ @option.StrikePrice.ToString("F2")</td>
+                        <td class="text-center mono">$ @option.Underlying.Price.ToString("F2")</td>
+                        <td class="text-center">T+@option.Expiry</td>
+                        <td class="text-center mono @(option.Payoff > 0 ? "text--positive" : "text--negative")">
                             $ @option.Payoff.ToString("F2") 
                         </td>
                         <td class="text-right">
@@ -168,6 +168,7 @@
             await SaveService.SaveGame(GameState);
             ShowMessage($"Exercised call and bought {option.Quantity}x {option.Underlying.Name} for ${option.ExerciseCost}." ,false);
             GameState.NotifyStateChanged();
+            _snapshot = GameState.Player.Stats.GetSnapshot(GameState.Player, GameState.Market);
         } 
     }
     

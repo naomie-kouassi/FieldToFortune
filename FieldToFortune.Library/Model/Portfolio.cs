@@ -14,14 +14,8 @@ public class Portfolio
         Holdings = new Dictionary<string, int>();
     }
 
-    public int Quantity(string commodityName)
-    {
-        if (Holdings.TryGetValue(commodityName, out int qty))
-        {
-            return qty;
-        }
-        return 0;
-    }
+    public int Quantity(string commodityName) => Holdings.GetValueOrDefault(commodityName, 0);
+    
 
     public void AddCommodity(string commodityName, int quantity)
     {

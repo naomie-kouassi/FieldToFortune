@@ -32,7 +32,7 @@
         <div class="top-bar__center">
             <span class="stat">Cash $ <strong>@GameState.Player.Cash.ToString("F2")</strong></span>
             <span class="stat @(NetWorthVariation >= 0 ? "stat--positive" : "stat--negative")">
-                Net Worth $ <strong>@Snapshot.NetWorth.ToString("F2")</strong>
+                Net Worth $ <strong>@_snapshot.NetWorth.ToString("F2")</strong>
                 <small>(@(NetWorthVariation >= 0 ? "▲ +" : "▼ ")@((NetWorthVariation * 100).ToString("F1"))%)</small>
             </span>
             <span class="stat">Target $ <strong>@GameState.WinningNetWorth</strong></span>
@@ -53,7 +53,7 @@
         </div>
     }
     
-    <!-- ── HEADLINES BANNER (shown when a market event occurs) ─── -->
+    <!-- ── ACTIONS BANNER (shown when options are exercisable) ─── -->
     @if (GameState.Player.HasExercisableCalls)
     {
         <div class="exercise-banner">
@@ -93,7 +93,7 @@
             {
                 <div class="order-form">
                     <label class="form-label"> Quantity  <strong>@($"({GameState.Player.Portfolio.Quantity(_selectedCommodity.Name)} in portfolio)")</strong></label>
-                    <input class="form-input" type="number" min="1" @bind="_quantity"
+                    <input class="form-input" type="number" min="1" @bind="_quantity" @bind:event="oninput"
                            @onkeydown="HandleIntegerKeyDown" 
                            @onkeydown:preventDefault="_shouldBlock"/>
 
@@ -160,7 +160,7 @@
                         @if (option.Underlying == _selectedCommodity)
                         {
                             <div class="option-card">
-                                <span>CALL @option.Underlying.Name @option.Quantity x</span>
+                                <span>CALL @option.Underlying.Name @($"(x{option.Quantity})")</span>
                                 <span>Strike = $@option.StrikePrice.ToString("F2")</span>
                                 <span>Expires in @option.Expiry turns</span>
                                 <span class="option-card__payoff">
@@ -201,11 +201,20 @@
                                              @(!commodity.IsUnlocked ? "asset-btn--locked" : "")"
                             @onclick="() => OnSelectCommodity(commodity)"
                             disabled="@(!commodity.IsUnlocked)">
+                        @if (GameState.Player.Portfolio.Quantity(commodity.Name) > 0)
+                        {
+                        <span class="asset-btn__holdings-badge">
+                                @(GameState.Player.Portfolio.Quantity(commodity.Name))
+                            </span>
+                        }
                         <span class="asset-btn__name">@commodity.Name</span>
+                        
                         <span class="asset-btn__price">$@commodity.Price.ToString("F2")</span>
                         <span class="asset-btn__var @(commodity.Variation >= 0 ? "var--up" : "var--down")">
                             @(commodity.Variation >= 0 ? "+" : "")@((commodity.Variation * 100).ToString("F1"))%
                         </span>
+                        <span class="asset-btn__risk" title="Volatility Rating: @(commodity.RiskLevel())/5">
+                            @commodity.RiskIndicator() </span>
                         @if (!commodity.IsUnlocked)
                         {
                             <span class="asset-btn__lock">🔒 Get to $ @commodity.UnlockThreshold Net Worth</span>
@@ -226,10 +235,10 @@
                     @(GameState.HasWon ? "Victory!" : "Game Over")
                 </h1>
                 <p class="endgame-stat">
-                    Final net worth : <strong>$ @Snapshot.NetWorth.ToString("F2")</strong>
+                    Final net worth : <strong>$ @_snapshot.NetWorth.ToString("F2")</strong>
                 </p>
                 <p class="endgame-stat">
-                    Performance : <strong>@(Snapshot.Profits >= 0 ? "+" : "-") $@(Math.Abs(Snapshot.Profits).ToString("F2"))</strong>
+                    Performance : <strong>@(_snapshot.Profits >= 0 ? "+" : "-") $@(Math.Abs(_snapshot.Profits).ToString("F2"))</strong>
                 </p>
                 <button class="btn btn--primary" @onclick="OnRestart">Play Again</button>
             </div>
@@ -258,9 +267,7 @@
     // ── Computed ─────────────────────────────────────────────
     private double CallPremium => TradingService.ComputePremium(_selectedCommodity, _strikePrice, _expiryTurns,_quantity);
     private double NetWorthVariation => GameState.Player.Stats.NetWorthVariation;
-    private PlayerStats.FinancialSnapshot Snapshot =>
-        GameState.Player.Stats.GetSnapshot(GameState.Player, GameState.Market);
-
+   
     // ── Lifecycle ────────────────────────────────────────────
     protected override void OnInitialized()
     {
@@ -323,6 +330,7 @@
 
         if (option != null) {
             await SaveService.SaveGame(GameState);
+            _snapshot = GameState.Player.Stats.GetSnapshot(GameState.Player, GameState.Market);
             ShowMessage($"Call option purchased (premium ${CallPremium:F2})", false);
         }
         
@@ -335,6 +343,7 @@
     {
         GameState.NextTurn();
         await SaveService.SaveGame(GameState);
+        _snapshot = GameState.Player.Stats.GetSnapshot(GameState.Player, GameState.Market);
         if (GameState.IsFinished)
         {
             _gameEnded = true;
@@ -342,11 +351,11 @@
             await SaveService.SaveGame(GameState);
             return;
         }
-        _snapshot = GameState.Player.Stats.GetSnapshot(GameState.Player, GameState.Market);
+        
         _selectedCommodity = GameState.Market.Commodities
             .FirstOrDefault(c => c.Name == _selectedCommodity.Name) ?? _selectedCommodity;
         
-        var newPrice = GameState.PriceProvider.GetPrice(_selectedCommodity.Name, GameState.CurrentTurn-1);
+        var newPrice = GameState.PriceProvider.GetPrice(_selectedCommodity.Name, GameState.CurrentTurn);
     
         // 2. Add just the single new point to your existing list
         _priceHistory.Add(new PricePoint(GameState.CurrentTurn, newPrice));
@@ -394,7 +403,8 @@
     {
         // Rebuild price history for the selected commodity up to current turn
 
-        var priceList = GameState.PriceProvider.GetFirstPrices(_selectedCommodity.Name, GameState.CurrentTurn);
+        var priceList = GameState.PriceProvider.
+            GetFirstPrices(_selectedCommodity.Name, Math.Min(GameState.CurrentTurn,GameState.NbTurns));
         var history = new List<PricePoint>();
         var turn = 1;
         foreach (var price in priceList)

@@ -24,7 +24,6 @@ public class GameState
     public GameState()
     {
         Market = new Market();
-        Market.InitializeMarket();
         PriceProvider = new SimulatedPriceProvider(Market,NbTurns);
         RawPrices = new Dictionary<string, double[]>();
     }
@@ -53,9 +52,10 @@ public class GameState
         Player = newPlayer;
         WinningNetWorth = winningNetWorth;
         CurrentTurn = 1;
+        Market = new Market();
+        PriceProvider = new SimulatedPriceProvider(Market, NbTurns);
+        //PriceProvider = new HistoricalPriceProvider();
         Market.InitializeMarket();
-        // re-run price simulation
-        PriceProvider = new SimulatedPriceProvider(Market, NbTurns + 1);
     }
     
     public bool IsDarkMode { get; set; } 

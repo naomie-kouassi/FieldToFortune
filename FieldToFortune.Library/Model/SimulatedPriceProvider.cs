@@ -12,7 +12,7 @@ public class SimulatedPriceProvider:IPriceProvider
 
     public double GetPrice(string commodityName, int turn)
     {
-        return _prices[commodityName][turn];
+        return _prices[commodityName][turn-1];
     }
 
     public double[] GetFirstPrices(string commodityName, int lastTurn)

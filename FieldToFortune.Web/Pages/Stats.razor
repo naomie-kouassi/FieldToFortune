@@ -73,7 +73,7 @@
                 <div class="progress-bar-fill" style="width: @(Math.Min(100,ProgressToTarget*100))%"></div>
             </div>
             <div class="progress-bar-labels">
-                <span>$ 1 000 </span>
+                <span>$ @PlayerStats.StartCash </span>
                 <span class="@(Profits >= 0 ? "text--positive" : "text--negative")">
                     $ @NetWorth.ToString("F0") 
                 </span>
