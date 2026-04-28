@@ -1,0 +1,195 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=DM+Sans:wght@300;400;600&display=swap');
+
+/* -- Theme variables --------------------------------------- */
+
+body.theme-dark {
+    --bg-primary:    #0d1117;
+    --bg-secondary:  #161b22;
+    --bg-panel:      #1c2128;
+    --bg-hover:      #21262d;
+    --border:        #30363d;
+    --text-primary:  #e6edf3;
+    --text-secondary:#8b949e;
+    --text-muted:    #484f58;
+    --accent:        #b08020;       
+    --accent-hover:  #8a6218;   
+    --positive:      #3fb950;
+    --negative:      #f85149;
+    --call:          #58a6ff;
+    --exercise:      #a27ec9;
+    --chart-line:    #d4a843;
+}
+
+body.theme-light {
+    --bg-primary:    #f6f8fa;
+    --bg-secondary:  #ffffff;
+    --bg-panel:      #ffffff;
+    --bg-hover:      #f3f4f6;
+    --border:        #d0d7de;
+    --text-primary:  #1f2328;
+    --text-secondary:#57606a;
+    --text-muted:    #8c959f;
+    --accent:        #d4a843;
+    --accent-hover:  #e8c06a;
+    --positive:      #1a7f37;
+    --negative:      #cf222e;
+    --call:          #0969da;
+    --exercise:      #5a3286;
+    --chart-line:    #b08020;
+}
+
+/* -- Reset ------------------------------------------ */
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    transition: background 0.3s, color 0.3s;
+}
+
+
+/* -- Chart ----------------------------------------- */
+
+.chart-container {
+    flex: 1;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    min-height: 50vh;
+    max-height: 50vh;
+    
+}
+
+/* -- Buttons ----------------------------------------------- */
+
+.btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+}
+
+.btn:hover:not(:disabled) { opacity: 0.85; }
+.btn:active:not(:disabled) { transform: scale(0.97); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn--full { width: 100%; padding: 10px; }
+
+.btn--primary { background: var(--accent);  color: #000; }
+
+.btn--large  { padding: 13px; font-size: 15px; }
+.btn--small  { padding: 4px 10px; font-size: 11px; }
+.btn--outline {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+}
+.btn--outline:hover { border-color: var(--accent); color: var(--accent); }
+
+
+/* -- Elements shared by most pages ---------------------------------- */
+
+.page-header {
+    margin-bottom: 28px;
+}
+
+.page-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+    outline: none;
+}
+
+.section-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 14px;
+}
+
+.portfolio-section {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+}
+
+.empty-state {
+    color: var(--text-muted);
+    font-size: 13px;
+    font-style: italic;
+    padding: 16px 0;
+}
+
+/* Pages need left margin to account for the nav bar */
+.market-page,
+.portfolio-page,
+.history-page,
+.stats-page,
+.menu-page {
+    margin-left: min(220px,20vw) ;
+    padding: 32px;
+    min-height: 100vh;
+    background: var(--bg-primary);
+}
+
+
+/* -- Data table -------------------------------------------- */
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.data-table th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0 12px 10px;
+    border-bottom: 1px solid var(--border);
+}
+
+.data-table td {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-primary);
+}
+
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--bg-hover); }
+
+.td--name { font-weight: 600; }
+.text-right { text-align: right; }
+.mono { font-family: 'IBM Plex Mono', monospace; }
+.text--positive { color: var(--positive); }
+.text--negative { color: var(--negative); }
+.text--muted    { color: var(--text-muted); }
+
+
+/* -- Badges ------------------------------------------------ */
+
+.badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: 'IBM Plex Mono', monospace;
+}

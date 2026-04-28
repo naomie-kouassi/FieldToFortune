@@ -1,0 +1,18 @@
+# Compilation
+[Bb]in/
+[Oo]bj/
+# IDE
+.idea/
+.vscode/
+*.sln.DotSettings.user
+*.user
+# Deployment
+publish/
+release/
+# OS
+.DS_Store
+Thumbs.db
+# Temporary .NET files
+*.suo
+*.userosscache
+*.sln.docstates

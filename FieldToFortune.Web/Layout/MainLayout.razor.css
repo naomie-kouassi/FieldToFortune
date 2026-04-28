@@ -1,0 +1,51 @@
+#blazor-error-ui {
+    color-scheme: light only;
+    background: lightyellow;
+    bottom: 0;
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    box-sizing: border-box;
+    display: none;
+    left: 0;
+    padding: 0.6rem 1.25rem 0.7rem 1.25rem;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+#blazor-error-ui .dismiss {
+    cursor: pointer;
+    position: absolute;
+    right: 0.75rem;
+    top: 0.5rem;
+}
+
+.mobile-warning {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 20px;
+}
+
+.mobile-warning {
+    display: none;
+}
+
+/* Only show the warning if the screen is narrower than 768px (standard mobile/tablet width) */
+@media (max-width: 768px) {
+    .mobile-warning {
+        display: flex;
+        background: var(--bg-primary);
+    }
+}
+
+.warning-content {
+    max-width: 400px;
+    border: 1px solid #444;
+    padding: 40px;
+}

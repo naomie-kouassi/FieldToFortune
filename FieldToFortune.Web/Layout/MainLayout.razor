@@ -1,0 +1,57 @@
+﻿@using FieldToFortune.Model
+@using FieldToFortune.Service
+@inherits LayoutComponentBase
+@inject SaveService SaveService
+@inject GameState GameState
+@inject IJSRuntime JsRuntime
+
+
+<div class="mobile-warning">
+    <div class="warning-content">
+        <h1>Access Restricted</h1>
+        <p>Field to Fortune is a game designed for desktop displays.</p>
+        <p>Please switch to a laptop or desktop for the best trading experience.</p>
+    </div>
+</div>
+
+
+@if (_isLoaded)
+{
+<div class="page">
+    <div class="sidebar">
+        <NavMenu/>
+    </div>
+    
+<main>
+    <article class="content">
+        @Body
+    </article>
+</main>
+
+</div>
+}
+
+    @if (!_isLoaded)
+    {
+        <text> Loading... </text>
+    }
+
+
+@code{
+
+    private bool _isLoaded; //avoids rendering before game finished loading
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {   
+            await SaveService.LoadGame(GameState);
+            _isLoaded = true;
+        
+            //Re-render the UI
+            StateHasChanged();
+        }
+    }
+
+}
+

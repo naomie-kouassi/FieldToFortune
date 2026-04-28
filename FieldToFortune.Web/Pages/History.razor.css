@@ -1,0 +1,6 @@
+/* -- Badges ------------------------------------------------ */
+
+.badge--buy  { background: rgba(63,185,80,0.12);  color: var(--positive); }
+.badge--sell { background: rgba(248,81,73,0.12);  color: var(--negative); }
+.badge--call { background: rgba(88,166,255,0.12); color: var(--call); }
+.badge--exercise { background: rgba(162,126,201,0.12); color: var(--exercise); }

@@ -1,0 +1,63 @@
+/* -- Stats row --------------------------------------------- */
+
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.stat-card--positive { border-color: rgba(63,185,80,0.3); }
+.stat-card--negative { border-color: rgba(248,81,73,0.3); }
+
+.stat-card__icon  { font-size: 18px; color: var(--accent); }
+.stat-card__label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.stat-card__value { font-family: 'IBM Plex Mono', monospace; font-size: 20px; font-weight: 600; color: var(--text-primary); }
+.stat-card--positive .stat-card__value { color: var(--positive); }
+.stat-card--negative .stat-card__value { color: var(--negative); }
+
+
+/* -- Progress bar ------------------------------------------ */
+
+.progress-bar-section {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    margin-top: 1rem;
+}
+
+.progress-bar-container { display: flex; flex-direction: column; gap: 8px;margin-top: 1rem; }
+
+.progress-bar-track {
+    height: 8px;
+    background: var(--bg-hover);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 4px;
+    transition: width 0.4s ease;
+}
+
+.progress-bar-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--text-muted);
+}
